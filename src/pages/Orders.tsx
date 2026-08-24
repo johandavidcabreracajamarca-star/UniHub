@@ -7,7 +7,7 @@ import { reviewService } from '../services/reviewService';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
 import { OrderStatusBadge } from '../components/OrderStatusBadge';
-import { ImagePlaceholder } from '../components/ImagePlaceholder';
+import { ProductImage } from '../components/ProductImage';
 import { RowSkeleton, EmptyState, ErrorState } from '../components/StateViews';
 import { ReviewModal } from '../components/ReviewModal';
 import { Button } from '../components/Button';
@@ -86,10 +86,14 @@ export function Orders() {
             return (
               <div key={order.id} className="rounded-card border border-ink/8 bg-white p-3.5 shadow-card">
                 <div className="flex items-start gap-3">
-                  <ImagePlaceholder
+                  <ProductImage
+                    src={item?.product?.image}
                     category={item?.product?.category}
                     className="h-14 w-14 shrink-0 rounded-control"
                     iconSize={18}
+                    alt={item?.product?.name}
+                    name={item?.product?.name}
+                    seedKey={item?.product?.id}
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">

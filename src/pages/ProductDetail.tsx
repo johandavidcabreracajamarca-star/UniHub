@@ -5,7 +5,7 @@ import type { Product } from '../types';
 import { CATEGORY_LABELS } from '../types';
 import { productService } from '../services/productService';
 import { formatCOP } from '../utils/format';
-import { ImagePlaceholder } from '../components/ImagePlaceholder';
+import { ProductImage } from '../components/ProductImage';
 import { VerifiedBadge } from '../components/VerifiedBadge';
 import { StarRating } from '../components/StarRating';
 import { Button } from '../components/Button';
@@ -62,7 +62,15 @@ export function ProductDetail() {
   return (
     <div className="pb-28 md:pb-10">
       <div className="relative">
-        <ImagePlaceholder category={product.category} className="aspect-square w-full md:aspect-[21/9]" iconSize={44} />
+        <ProductImage
+          src={product.image}
+          category={product.category}
+          className="aspect-square w-full md:aspect-[21/9]"
+          iconSize={44}
+          alt={product.name}
+          name={product.name}
+          seedKey={product.id}
+        />
         <button
           onClick={() => navigate(-1)}
           className="absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-ink shadow-card"

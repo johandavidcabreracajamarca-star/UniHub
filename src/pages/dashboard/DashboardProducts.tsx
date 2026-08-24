@@ -7,7 +7,7 @@ import { productService } from '../../services/productService';
 import { useToast } from '../../hooks/useToast';
 import { CreateBusinessForm } from './CreateBusinessForm';
 import { Button } from '../../components/Button';
-import { ImagePlaceholder } from '../../components/ImagePlaceholder';
+import { ProductImage } from '../../components/ProductImage';
 import { EmptyState, RowSkeleton } from '../../components/StateViews';
 import { formatCOP } from '../../utils/format';
 
@@ -73,7 +73,15 @@ export function DashboardProducts() {
         <div className="flex flex-col gap-3">
           {products.map((product) => (
             <div key={product.id} className="flex items-center gap-3 rounded-card border border-ink/8 bg-white p-3 shadow-card">
-              <ImagePlaceholder category={product.category} className="h-14 w-14 shrink-0 rounded-control" iconSize={18} />
+              <ProductImage
+                src={product.image}
+                category={product.category}
+                className="h-14 w-14 shrink-0 rounded-control"
+                iconSize={18}
+                alt={product.name}
+                name={product.name}
+                seedKey={product.id}
+              />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-ink truncate">{product.name}</p>
                 <p className="text-sm text-ink/50">{formatCOP(product.price)}</p>

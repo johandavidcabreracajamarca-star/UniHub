@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { ShoppingBag } from 'lucide-react';
 import type { Product } from '../types';
 import { formatCOP } from '../utils/format';
-import { ImagePlaceholder } from './ImagePlaceholder';
+import { ProductImage } from './ProductImage';
 import { VerifiedBadge } from './VerifiedBadge';
 import { StarRating } from './StarRating';
 
@@ -16,7 +16,14 @@ export function ProductCard({ product }: { product: Product }) {
       className="group text-left w-full rounded-card bg-white shadow-card hover:shadow-card-hover transition-shadow overflow-hidden border border-ink/5"
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden">
-        <ImagePlaceholder category={product.category} className="h-full w-full" />
+        <ProductImage
+          src={product.image}
+          category={product.category}
+          className="h-full w-full"
+          alt={product.name}
+          name={product.name}
+          seedKey={product.id}
+        />
         {!product.available && (
           <div className="absolute inset-0 flex items-center justify-center bg-ink/50">
             <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-ink">

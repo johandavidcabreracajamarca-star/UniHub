@@ -7,7 +7,7 @@ import { orderService } from '../../services/orderService';
 import { useToast } from '../../hooks/useToast';
 import { CreateBusinessForm } from './CreateBusinessForm';
 import { OrderStatusBadge } from '../../components/OrderStatusBadge';
-import { ImagePlaceholder } from '../../components/ImagePlaceholder';
+import { ProductImage } from '../../components/ProductImage';
 import { EmptyState, RowSkeleton } from '../../components/StateViews';
 import { Select } from '../../components/Input';
 import { formatCOP, formatDateTime } from '../../utils/format';
@@ -68,7 +68,15 @@ export function DashboardOrders() {
         return (
           <div key={order.id} className="rounded-card border border-ink/8 bg-white p-3.5 shadow-card">
             <div className="flex items-start gap-3">
-              <ImagePlaceholder category={item?.product?.category} className="h-12 w-12 shrink-0 rounded-control" iconSize={16} />
+              <ProductImage
+                src={item?.product?.image}
+                category={item?.product?.category}
+                className="h-12 w-12 shrink-0 rounded-control"
+                iconSize={16}
+                alt={item?.product?.name}
+                name={item?.product?.name}
+                seedKey={item?.product?.id}
+              />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-ink truncate">{item?.product?.name ?? 'Producto'}</p>
                 <p className="text-xs text-ink/50">Comprador: {order.buyer?.full_name ?? 'Estudiante'}</p>

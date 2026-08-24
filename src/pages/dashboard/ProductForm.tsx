@@ -9,6 +9,7 @@ import { useToast } from '../../hooks/useToast';
 import { CATEGORY_LABELS } from '../../types';
 import type { ProductCategory } from '../../types';
 import { RowSkeleton } from '../../components/StateViews';
+import { ProductImage } from '../../components/ProductImage';
 
 export function ProductForm() {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +24,7 @@ export function ProductForm() {
   const [category, setCategory] = useState<ProductCategory>('otros');
   const [stock, setStock] = useState('');
   const [available, setAvailable] = useState(true);
+  const [image, setImage] = useState('');
 
   const [loadingProduct, setLoadingProduct] = useState(isEditing);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +40,7 @@ export function ProductForm() {
         setCategory(product.category);
         setStock(String(product.stock));
         setAvailable(product.available);
+        setImage(product.image ?? '');
       }
       setLoadingProduct(false);
     });
@@ -66,6 +69,7 @@ export function ProductForm() {
         category,
         stock: stockNum,
         available,
+        image: image.trim() || null,
       });
       setSaving(false);
       if (error) {
@@ -82,6 +86,7 @@ export function ProductForm() {
         category,
         stock: stockNum,
         available,
+        image: image.trim() || null,
       });
       setSaving(false);
       if (error) {
@@ -118,6 +123,28 @@ export function ProductForm() {
           onChange={(e) => setDescription(e.target.value)}
           required
         />
+
+        <div>
+          <Input
+            label="Imagen del producto (URL)"
+            type="url"
+            placeholder="https://ejemplo.com/mi-foto.jpg"
+            hint="Opcional. Si lo dejas vacío, UniHub buscará automáticamente una foto relacionada con el nombre y la categoría de tu producto."
+            value={image}
+            onChange={(e) => setImage(e.target.value)}
+          />
+          {image.trim() && (
+            <div className="mt-2">
+              <ProductImage
+                src={image}
+                category={category}
+                className="h-28 w-28 rounded-control border border-ink/10"
+                iconSize={22}
+                alt="Vista previa"
+              />
+            </div>
+          )}
+        </div>
 
         <div className="grid grid-cols-2 gap-3">
           <Input
