@@ -141,6 +141,8 @@ export function ProductForm() {
                 className="h-28 w-28 rounded-control border border-ink/10"
                 iconSize={22}
                 alt="Vista previa"
+                name={name || 'producto'}
+                seedKey={id || name || 'preview'}
               />
             </div>
           )}

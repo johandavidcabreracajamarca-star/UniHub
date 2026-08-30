@@ -1,51 +1,46 @@
 import type { ProductCategory } from '../types';
 
-// ============================================================================
-// IMÁGENES AUTOMÁTICAS POR PALABRA CLAVE
-// ============================================================================
-// Cuando un producto no tiene una imagen asignada manualmente, generamos una
-// URL que trae una foto real de internet relacionada con su nombre/categoría,
-// usando LoremFlickr (servicio público y gratuito, sin necesidad de API key).
-// El "lock" fija siempre la misma foto para el mismo producto, para que no
-// cambie cada vez que se recarga la página.
-// ============================================================================
-
-const CATEGORY_KEYWORDS: Record<ProductCategory, string> = {
-  comida: 'food',
-  ropa: 'clothing',
-  tecnologia: 'technology',
-  accesorios: 'accessories',
-  servicios: 'service',
-  otros: 'shop',
+// LoremFlickr funciona mejor con términos concretos en inglés. Antes se enviaba
+// solo la primera palabra del nombre (por ejemplo "caja" o "tutoría"), lo cual
+// producía fotografías genéricas o sin relación con el producto.
+const CATEGORY_KEYWORDS: Record<ProductCategory, string[]> = {
+  comida: ['food'], ropa: ['clothing'], tecnologia: ['technology'],
+  accesorios: ['accessory'], servicios: ['professional'], otros: ['product'],
 };
 
-/** Convierte el id del producto en un número estable para "fijar" la foto. */
+const STOP_WORDS = new Set([
+  'de', 'del', 'la', 'las', 'el', 'los', 'para', 'por', 'con', 'sin', 'una',
+  'uno', 'unos', 'unas', 'y', 'en', 'al', 'caja', 'combo', 'unidad', 'nuevo',
+]);
+
+const TRANSLATIONS: Record<string, string> = {
+  torta: 'cake', chocolate: 'chocolate', brownie: 'brownie', cupcakes: 'cupcakes',
+  cupcake: 'cupcake', comida: 'food', jugo: 'juice', natural: 'fresh', frutos: 'nuts',
+  secos: 'nuts', cable: 'usb cable', funda: 'laptop sleeve', portatil: 'laptop',
+  mantenimiento: 'laptop repair', buzo: 'hoodie', camiseta: 'tshirt', gorra: 'cap',
+  ropa: 'clothing', accesorio: 'accessory', accesorios: 'accessories',
+  tutoria: 'tutoring', calculo: 'calculus', programacion: 'programming',
+  microeconomia: 'economics', servicio: 'service', servicios: 'service',
+};
+
 function stableSeed(input: string): number {
   let hash = 0;
-  for (let i = 0; i < input.length; i++) {
-    hash = (hash * 31 + input.charCodeAt(i)) >>> 0;
-  }
+  for (let i = 0; i < input.length; i++) hash = (hash * 31 + input.charCodeAt(i)) >>> 0;
   return (hash % 9999) + 1;
 }
 
-/** Extrae la primera palabra significativa del nombre del producto. */
-function firstKeyword(name: string): string | null {
-  const word = name
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // quita tildes
-    .replace(/[^a-z\s]/g, '')
-    .trim()
-    .split(/\s+/)[0];
-  return word && word.length > 2 ? word : null;
+function searchKeywords(name: string, category: ProductCategory): string[] {
+  const words = name.toLowerCase().normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .split(/\s+/)
+    .filter((word) => word.length > 2 && !STOP_WORDS.has(word))
+    .flatMap((word) => (TRANSLATIONS[word] ?? word).split(' '))
+    .slice(0, 3);
+  return [...new Set([...words, ...CATEGORY_KEYWORDS[category]])];
 }
 
-export function getAutoProductImage(
-  name: string,
-  category: ProductCategory,
-  seedKey: string
-): string {
-  const keywords = [firstKeyword(name), CATEGORY_KEYWORDS[category]].filter(Boolean).join(',');
-  const seed = stableSeed(seedKey);
-  return `https://loremflickr.com/480/480/${keywords}?lock=${seed}`;
+export function getAutoProductImage(name: string, category: ProductCategory, seedKey: string): string {
+  const keywords = searchKeywords(name, category).map(encodeURIComponent).join(',');
+  return `https://loremflickr.com/480/480/${keywords}?lock=${stableSeed(seedKey)}`;
 }
