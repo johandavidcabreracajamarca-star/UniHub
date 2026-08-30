@@ -1,46 +1,56 @@
 import type { ProductCategory } from '../types';
 
-// LoremFlickr funciona mejor con términos concretos en inglés. Antes se enviaba
-// solo la primera palabra del nombre (por ejemplo "caja" o "tutoría"), lo cual
-// producía fotografías genéricas o sin relación con el producto.
-const CATEGORY_KEYWORDS: Record<ProductCategory, string[]> = {
-  comida: ['food'], ropa: ['clothing'], tecnologia: ['technology'],
-  accesorios: ['accessory'], servicios: ['professional'], otros: ['product'],
+// ============================================================================
+// IMÁGENES AUTOMÁTICAS POR CATEGORÍA
+// ============================================================================
+// Cuando un producto no tiene una imagen asignada manualmente, generamos una
+// URL que trae una foto real de internet relacionada con su categoría, usando
+// LoremFlickr (servicio público y gratuito, sin necesidad de API key).
+//
+// IMPORTANTE: LoremFlickr busca por palabras en INGLÉS. Antes intentábamos
+// traducir el nombre del producto tal cual lo escribe el vendedor (ej. "torta"),
+// pero como el servicio no entiende español, no encontraba coincidencia y
+// devolvía una foto genérica sin relación (por eso aparecía siempre la misma
+// imagen de un gato). La solución: usar solo palabras clave en inglés,
+// tomadas de una lista curada por categoría — así la foto siempre es
+// coherente con el tipo de producto, aunque no sea 100% específica al
+// nombre exacto.
+//
+// El "lock" fija siempre la misma foto para el mismo producto, para que no
+// cambie cada vez que se recarga la página.
+// ============================================================================
+
+// Varias palabras en inglés por categoría, para dar variedad entre productos
+// de la misma categoría sin depender de traducir el nombre escrito por el
+// vendedor.
+const CATEGORY_KEYWORD_POOL: Record<ProductCategory, string[]> = {
+  comida: ['food', 'meal', 'snack', 'bakery', 'dessert', 'cooking'],
+  ropa: ['clothing', 'fashion', 'apparel', 'shirt', 'outfit'],
+  tecnologia: ['technology', 'gadget', 'electronics', 'computer', 'device'],
+  accesorios: ['accessories', 'jewelry', 'bag', 'watch'],
+  servicios: ['service', 'work', 'business', 'consulting'],
+  otros: ['shop', 'store', 'product', 'market'],
 };
 
-const STOP_WORDS = new Set([
-  'de', 'del', 'la', 'las', 'el', 'los', 'para', 'por', 'con', 'sin', 'una',
-  'uno', 'unos', 'unas', 'y', 'en', 'al', 'caja', 'combo', 'unidad', 'nuevo',
-]);
-
-const TRANSLATIONS: Record<string, string> = {
-  torta: 'cake', chocolate: 'chocolate', brownie: 'brownie', cupcakes: 'cupcakes',
-  cupcake: 'cupcake', comida: 'food', jugo: 'juice', natural: 'fresh', frutos: 'nuts',
-  secos: 'nuts', cable: 'usb cable', funda: 'laptop sleeve', portatil: 'laptop',
-  mantenimiento: 'laptop repair', buzo: 'hoodie', camiseta: 'tshirt', gorra: 'cap',
-  ropa: 'clothing', accesorio: 'accessory', accesorios: 'accessories',
-  tutoria: 'tutoring', calculo: 'calculus', programacion: 'programming',
-  microeconomia: 'economics', servicio: 'service', servicios: 'service',
-};
-
+/** Convierte una clave (p. ej. el id del producto) en un número estable. */
 function stableSeed(input: string): number {
   let hash = 0;
-  for (let i = 0; i < input.length; i++) hash = (hash * 31 + input.charCodeAt(i)) >>> 0;
-  return (hash % 9999) + 1;
+  for (let i = 0; i < input.length; i++) {
+    hash = (hash * 31 + input.charCodeAt(i)) >>> 0;
+  }
+  return hash >>> 0;
 }
 
-function searchKeywords(name: string, category: ProductCategory): string[] {
-  const words = name.toLowerCase().normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9\s-]/g, ' ')
-    .split(/\s+/)
-    .filter((word) => word.length > 2 && !STOP_WORDS.has(word))
-    .flatMap((word) => (TRANSLATIONS[word] ?? word).split(' '))
-    .slice(0, 3);
-  return [...new Set([...words, ...CATEGORY_KEYWORDS[category]])];
-}
-
-export function getAutoProductImage(name: string, category: ProductCategory, seedKey: string): string {
-  const keywords = searchKeywords(name, category).map(encodeURIComponent).join(',');
-  return `https://loremflickr.com/480/480/${keywords}?lock=${stableSeed(seedKey)}`;
+export function getAutoProductImage(
+  name: string,
+  category: ProductCategory,
+  seedKey: string
+): string {
+  const seed = stableSeed(seedKey || name);
+  const pool = CATEGORY_KEYWORD_POOL[category] ?? CATEGORY_KEYWORD_POOL.otros;
+  // Elegimos una palabra del pool de forma estable (siempre la misma para
+  // el mismo producto), para variar entre productos de la misma categoría.
+  const keyword = pool[seed % pool.length];
+  const lock = (seed % 9999) + 1;
+  return `https://loremflickr.com/480/480/${keyword}?lock=${lock}`;
 }
