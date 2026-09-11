@@ -1,6 +1,6 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Camera, Link2, X, Loader2 } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { Input, Select, Textarea } from '../../components/Input';
 import { productService } from '../../services/productService';
@@ -10,6 +10,7 @@ import { CATEGORY_LABELS } from '../../types';
 import type { ProductCategory } from '../../types';
 import { RowSkeleton } from '../../components/StateViews';
 import { ProductImage } from '../../components/ProductImage';
+import { processUploadedImage } from '../../utils/imageUpload';
 
 export function ProductForm() {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +30,9 @@ export function ProductForm() {
   const [loadingProduct, setLoadingProduct] = useState(isEditing);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [showUrlField, setShowUrlField] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isEditing || !id) return;
@@ -45,6 +49,23 @@ export function ProductForm() {
       setLoadingProduct(false);
     });
   }, [id, isEditing]);
+
+  const handleFileSelect = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // permite volver a elegir la misma foto si hace falta
+    if (!file) return;
+
+    setUploading(true);
+    setError(null);
+    const { dataUrl, error: uploadError } = await processUploadedImage(file);
+    setUploading(false);
+
+    if (uploadError) {
+      setError(uploadError);
+      return;
+    }
+    setImage(dataUrl ?? '');
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -125,27 +146,91 @@ export function ProductForm() {
         />
 
         <div>
-          <Input
-            label="Imagen del producto (URL)"
-            type="url"
-            placeholder="https://ejemplo.com/mi-foto.jpg"
-            hint="Opcional. Si lo dejas vacío, UniHub buscará automáticamente una foto relacionada con el nombre y la categoría de tu producto."
-            value={image}
-            onChange={(e) => setImage(e.target.value)}
+          <span className="mb-1.5 block text-sm font-medium text-ink">Foto del producto</span>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleFileSelect}
+            className="hidden"
           />
-          {image.trim() && (
-            <div className="mt-2">
-              <ProductImage
-                src={image}
-                category={category}
-                className="h-28 w-28 rounded-control border border-ink/10"
-                iconSize={22}
-                alt="Vista previa"
-                name={name || 'producto'}
-                seedKey={id || name || 'preview'}
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-control border-2 border-dashed border-ink/20 bg-surface transition-colors hover:border-primary disabled:opacity-60"
+            >
+              {uploading ? (
+                <Loader2 size={22} className="animate-spin text-ink/40" />
+              ) : image.trim() ? (
+                <ProductImage
+                  src={image}
+                  category={category}
+                  className="h-full w-full"
+                  iconSize={22}
+                  alt="Vista previa"
+                />
+              ) : (
+                <div className="flex flex-col items-center gap-1 text-ink/40">
+                  <Camera size={22} />
+                  <span className="text-[11px] font-medium">Tomar foto</span>
+                </div>
+              )}
+            </button>
+
+            <div className="flex flex-1 flex-col gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                icon={<Camera size={14} />}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                {image.trim() ? 'Cambiar foto' : 'Elegir foto'}
+              </Button>
+
+              {image.trim() ? (
+                <button
+                  type="button"
+                  onClick={() => setImage('')}
+                  className="inline-flex items-center gap-1 self-start text-xs font-medium text-ink/50 hover:text-red-600"
+                >
+                  <X size={13} />
+                  Quitar foto
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowUrlField((v) => !v)}
+                  className="inline-flex items-center gap-1 self-start text-xs font-medium text-ink/50 hover:text-ink"
+                >
+                  <Link2 size={13} />
+                  Usar un enlace en su lugar
+                </button>
+              )}
+            </div>
+          </div>
+
+          {showUrlField && !image.trim() && (
+            <div className="mt-3">
+              <Input
+                label="Enlace de la imagen (URL)"
+                type="url"
+                placeholder="https://ejemplo.com/mi-foto.jpg"
+                value={image}
+                onChange={(e) => setImage(e.target.value)}
               />
             </div>
           )}
+
+          <p className="mt-2 text-xs text-ink/40">
+            Opcional. Si no subes una foto, UniHub mostrará automáticamente una imagen relacionada con la categoría de tu producto.
+          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
