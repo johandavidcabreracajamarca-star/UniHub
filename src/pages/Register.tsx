@@ -40,17 +40,23 @@ export function Register() {
     });
   }, [universityId]);
 
-  const selectedUniversity = universities.find((u) => u.id === universityId);
+    const selectedUniversity = universities.find((u) => u.id === universityId);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!selectedUniversity) {
+      setError('Universidad no válida.');
+      return;
+    }
+
     setLoading(true);
     const { error } = await authService.register({
       full_name: fullName,
       email,
       password,
-      university_id: universityId,
+      university: selectedUniversity,
       faculty_id: facultyId,
       role,
     });
