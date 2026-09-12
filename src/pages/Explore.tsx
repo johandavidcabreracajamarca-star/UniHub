@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import type { Business, Product, ProductCategory } from '../types';
-import { productService } from '../services/productService';
+import { productService, type ProductSort } from '../services/productService';
 import { businessService } from '../services/businessService';
 import { HomeHeader } from '../components/HomeHeader';
 import { CategoryPills } from '../components/CategoryPills';
+import { SortSelect } from '../components/SortSelect';
 import { ProductCard } from '../components/ProductCard';
 import { BusinessCard } from '../components/BusinessCard';
 import { ProductGridSkeleton, EmptyState, ErrorState } from '../components/StateViews';
@@ -11,6 +12,7 @@ import { PackageSearch } from 'lucide-react';
 
 export function Explore() {
   const [category, setCategory] = useState<ProductCategory | 'todas'>('todas');
+  const [sort, setSort] = useState<ProductSort>('recientes');
   const [products, setProducts] = useState<Product[]>([]);
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,7 +23,7 @@ export function Explore() {
     setError(false);
     try {
       const [p, b] = await Promise.all([
-        productService.listAll({ category }),
+        productService.listAll({ category, sort }),
         businessService.listVerified(),
       ]);
       setProducts(p);
@@ -36,7 +38,7 @@ export function Explore() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category]);
+  }, [category, sort]);
 
   return (
     <div>
@@ -63,7 +65,10 @@ export function Explore() {
       )}
 
       <section className="mt-6 px-4 pb-6 md:px-6">
-        <h2 className="mb-3 text-base font-semibold text-ink">Productos destacados</h2>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h2 className="text-base font-semibold text-ink">Productos destacados</h2>
+          <SortSelect value={sort} onChange={setSort} />
+        </div>
 
         {loading && <ProductGridSkeleton />}
 
