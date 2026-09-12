@@ -151,9 +151,7 @@ export const productService = {
 
   async update(
     id: string,
-    changes: Partial
-      Pick<Product, 'name' | 'description' | 'price' | 'category' | 'image' | 'stock' | 'available'>
-    >
+    changes: Partial<Pick<Product, 'name' | 'description' | 'price' | 'category' | 'image' | 'stock' | 'available'>>
   ): Promise<{ error: string | null }> {
     if (isSupabaseConfigured && supabase) {
       const { error } = await supabase.from('products').update(changes).eq('id', id);
