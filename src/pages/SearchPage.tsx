@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search as SearchIcon, SlidersHorizontal, PackageSearch } from 'lucide-react';
 import type { Faculty, Product, University } from '../types';
-import { productService } from '../services/productService';
+import { productService, type ProductSort } from '../services/productService';
 import { universityService } from '../services/universityService';
 import { ProductCard } from '../components/ProductCard';
+import { SortSelect } from '../components/SortSelect';
 import { ProductGridSkeleton, EmptyState } from '../components/StateViews';
 import { FilterSheet, type FilterState } from '../components/FilterSheet';
 
@@ -20,6 +21,7 @@ export function SearchPage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
+  const [sort, setSort] = useState<ProductSort>('recientes');
   const [showFilters, setShowFilters] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [universities, setUniversities] = useState<University[]>([]);
@@ -42,13 +44,14 @@ export function SearchPage() {
         facultyId: filters.facultyId !== 'todas' ? filters.facultyId : undefined,
         onlyAvailable: filters.onlyAvailable,
         minRating: filters.minRating || undefined,
+        sort,
       });
       setProducts(results);
       setLoading(false);
       setHasSearched(true);
     }, 250);
     return () => clearTimeout(timeout);
-  }, [query, filters]);
+  }, [query, filters, sort]);
 
   const activeFilterCount =
     (filters.category !== 'todas' ? 1 : 0) +
@@ -94,6 +97,15 @@ export function SearchPage() {
       </div>
 
       <div className="mt-5 pb-6">
+        {!loading && hasSearched && products.length > 0 && (
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <span className="text-xs text-ink/50">
+              {products.length} {products.length === 1 ? 'resultado' : 'resultados'}
+            </span>
+            <SortSelect value={sort} onChange={setSort} />
+          </div>
+        )}
+
         {loading && <ProductGridSkeleton />}
 
         {!loading && hasSearched && products.length === 0 && (
