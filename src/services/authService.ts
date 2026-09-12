@@ -1,6 +1,6 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
-import type { Profile, UserRole } from '../types';
-import { demoProfiles, demoUniversities } from '../data/demoData';
+import type { Profile, University, UserRole } from '../types';
+import { demoProfiles } from '../data/demoData';
 
 const DEMO_SESSION_KEY = 'unihub_demo_session';
 const DEMO_USERS_KEY = 'unihub_demo_users'; // { [email]: { password, profile } }
@@ -9,7 +9,7 @@ interface RegisterInput {
   full_name: string;
   email: string;
   password: string;
-  university_id: string;
+  university: University;
   faculty_id: string;
   role: UserRole;
 }
@@ -40,8 +40,7 @@ function validateInstitutionalEmail(email: string, domain: string) {
 
 export const authService = {
   async register(input: RegisterInput): Promise<{ error: string | null }> {
-    const university = demoUniversities.find((u) => u.id === input.university_id);
-    if (!university) return { error: 'Universidad no válida.' };
+    const { university } = input;
 
     if (!validateInstitutionalEmail(input.email, university.domain)) {
       return {
@@ -61,7 +60,7 @@ export const authService = {
         id: data.user.id,
         full_name: input.full_name,
         email: input.email,
-        university_id: input.university_id,
+        university_id: university.id,
         faculty_id: input.faculty_id,
         role: input.role,
       });
@@ -78,7 +77,7 @@ export const authService = {
       id: `user-${Date.now()}`,
       full_name: input.full_name,
       email: input.email,
-      university_id: input.university_id,
+      university_id: university.id,
       faculty_id: input.faculty_id,
       role: input.role,
       created_at: new Date().toISOString(),
