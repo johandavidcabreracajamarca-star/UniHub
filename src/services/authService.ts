@@ -48,23 +48,25 @@ export const authService = {
       };
     }
 
-    if (isSupabaseConfigured && supabase) {
+     if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase.auth.signUp({
         email: input.email,
         password: input.password,
+        options: {
+          data: {
+            full_name: input.full_name,
+            university_id: university.id,
+            faculty_id: input.faculty_id,
+            role: input.role,
+          },
+        },
       });
       if (error) return { error: error.message };
       if (!data.user) return { error: 'No se pudo crear la cuenta.' };
 
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: data.user.id,
-        full_name: input.full_name,
-        email: input.email,
-        university_id: university.id,
-        faculty_id: input.faculty_id,
-        role: input.role,
-      });
-      if (profileError) return { error: profileError.message };
+      // El perfil se crea solo, con un trigger en la base de datos
+      // (ver public.handle_new_user en supabase/schema.sql) a partir
+      // de los metadatos enviados arriba.
       return { error: null };
     }
 
