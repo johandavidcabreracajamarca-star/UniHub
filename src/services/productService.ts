@@ -3,6 +3,8 @@ import type { Product, ProductCategory } from '../types';
 import { demoDb } from '../data/demoDb';
 import { businessService } from './businessService';
 
+export type ProductSort = 'recientes' | 'precio_asc' | 'precio_desc' | 'calificacion';
+
 export interface ProductFilters {
   query?: string;
   category?: ProductCategory | 'todas';
@@ -10,6 +12,22 @@ export interface ProductFilters {
   facultyId?: string;
   onlyAvailable?: boolean;
   minRating?: number;
+  sort?: ProductSort;
+}
+
+function sortProducts(products: Product[], sort: ProductSort = 'recientes'): Product[] {
+  const sorted = [...products];
+  switch (sort) {
+    case 'precio_asc':
+      return sorted.sort((a, b) => a.price - b.price);
+    case 'precio_desc':
+      return sorted.sort((a, b) => b.price - a.price);
+    case 'calificacion':
+      return sorted.sort((a, b) => (b.business?.rating ?? 0) - (a.business?.rating ?? 0));
+    case 'recientes':
+    default:
+      return sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }
 }
 
 async function enrichWithBusiness(product: Product): Promise<Product> {
@@ -24,7 +42,7 @@ export const productService = {
     if (isSupabaseConfigured && supabase) {
       let queryBuilder = supabase
         .from('products')
-        .select('*, businesses(*)')
+        .select('*, business:businesses(*)')
         .order('created_at', { ascending: false });
       if (filters.category && filters.category !== 'todas') {
         queryBuilder = queryBuilder.eq('category', filters.category);
@@ -39,7 +57,7 @@ export const productService = {
       products = await Promise.all(raw.map(enrichWithBusiness));
     }
 
-    return products.filter((p) => {
+    const filtered = products.filter((p) => {
       if (filters.query) {
         const q = filters.query.toLowerCase();
         const matchesName = p.name.toLowerCase().includes(q);
@@ -64,13 +82,15 @@ export const productService = {
       }
       return true;
     });
+
+    return sortProducts(filtered, filters.sort);
   },
 
   async getById(id: string): Promise<Product | null> {
     if (isSupabaseConfigured && supabase) {
       const { data } = await supabase
         .from('products')
-        .select('*, businesses(*)')
+        .select('*, business:businesses(*)')
         .eq('id', id)
         .single();
       return (data as Product) ?? null;
@@ -131,7 +151,7 @@ export const productService = {
 
   async update(
     id: string,
-    changes: Partial<
+    changes: Partial
       Pick<Product, 'name' | 'description' | 'price' | 'category' | 'image' | 'stock' | 'available'>
     >
   ): Promise<{ error: string | null }> {
