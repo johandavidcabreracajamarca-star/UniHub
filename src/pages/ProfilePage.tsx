@@ -42,7 +42,7 @@ export function ProfilePage() {
         <InfoRow icon={<Mail size={16} />} label="Correo institucional" value={profile.email} />
       </div>
 
-      {profile.role === 'emprendedor' && (
+            {(profile.role === 'emprendedor' || profile.role === 'admin') && (
         <button
           onClick={() => navigate('/dashboard')}
           className="mt-4 flex w-full items-center justify-between rounded-card border border-ink/8 bg-white p-4 shadow-card hover:bg-ink/5 transition-colors"
