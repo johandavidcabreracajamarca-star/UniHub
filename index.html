@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="es">
-    <head>
+  <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -12,9 +12,26 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="UniHub" />
     <title>UniHub — Conectando ideas, impulsando emprendimientos</title>
+    <style>
+      body {
+        background: #e8e9eb;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!--
+        Pantalla de bienvenida (splash) mostrada mientras carga el bundle de
+        React. React reemplaza este contenido apenas monta la app, así que
+        no requiere JavaScript adicional ni se queda pegada si algo falla.
+      -->
+      <div class="flex min-h-screen flex-col items-center justify-center gap-4 bg-surface">
+        <img src="/icon-192.png" alt="UniHub" class="h-20 w-20 rounded-2xl shadow-card-hover" />
+        <div
+          class="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"
+        ></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
