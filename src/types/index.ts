@@ -85,6 +85,10 @@ export interface Business {
   // todos sus productos de la vista pública sin borrar nada. Opcional para
   // no romper los datos de demo existentes, que nunca lo traen.
   suspended?: boolean;
+  // ubicación del emprendimiento (opcional): permite ordenar productos por
+  // cercanía. Null/undefined si el dueño nunca la configuró.
+  latitude?: number | null;
+  longitude?: number | null;
   // campos derivados (joins), opcionales para la UI
   university_name?: string;
   faculty_name?: string;
