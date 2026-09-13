@@ -11,7 +11,7 @@ export function BusinessCard({ business }: { business: Business }) {
   return (
     <button
       onClick={() => navigate(`/business/${business.id}`)}
-      className="group text-left shrink-0 w-40 rounded-card bg-white shadow-card hover:shadow-card-hover transition-shadow overflow-hidden border border-ink/5"
+      className="group text-left shrink-0 w-40 rounded-card bg-white shadow-card hover:shadow-card-hover overflow-hidden border border-ink/5 transition-all duration-200 ease-out hover:-translate-y-1 active:scale-[0.98] active:shadow-card"
     >
       <ImagePlaceholder category={business.category} className="h-20 w-full" iconSize={22} />
       <div className="p-2.5">
