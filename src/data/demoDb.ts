@@ -5,7 +5,7 @@
 // que el MVP sea completamente funcional sin backend real.
 // ============================================================================
 
-import type { Business, Product, Order, Review } from '../types';
+import type { Business, Product, Order, Review, Notification } from '../types';
 import {
   demoBusinesses,
   demoProducts,
@@ -18,6 +18,7 @@ const KEYS = {
   products: 'unihub_demo_products',
   orders: 'unihub_demo_orders',
   reviews: 'unihub_demo_reviews',
+  notifications: 'unihub_demo_notifications',
 };
 
 function load<T>(key: string, seed: T[]): T[] {
@@ -55,5 +56,11 @@ export const demoDb = {
   },
   saveReviews(items: Review[]) {
     save(KEYS.reviews, items);
+  },
+  getNotifications(): Notification[] {
+    return load(KEYS.notifications, []);
+  },
+  saveNotifications(items: Notification[]) {
+    save(KEYS.notifications, items);
   },
 };
