@@ -3,6 +3,7 @@ import type { Order, OrderStatus } from '../types';
 import { demoDb } from '../data/demoDb';
 import { businessService } from './businessService';
 import { productService } from './productService';
+import { notificationService } from './notificationService';
 import { demoProfiles } from '../data/demoData';
 
 async function enrichOrder(order: Order): Promise<Order> {
@@ -140,15 +141,70 @@ export const orderService = {
   },
 
   async updateStatus(orderId: string, status: OrderStatus): Promise<{ error: string | null }> {
+    let buyerId: string | null = null;
+
     if (isSupabaseConfigured && supabase) {
+      const { data: existing } = await supabase
+        .from('orders')
+        .select('buyer_id')
+        .eq('id', orderId)
+        .single();
+      buyerId = (existing as { buyer_id: string } | null)?.buyer_id ?? null;
+
       const { error } = await supabase.from('orders').update({ status }).eq('id', orderId);
-      return { error: error ? error.message : null };
+      if (error) return { error: error.message };
+    } else {
+      const orders = demoDb.getOrders();
+      const idx = orders.findIndex((o) => o.id === orderId);
+      if (idx === -1) return { error: 'Pedido no encontrado.' };
+      buyerId = orders[idx].buyer_id;
+      orders[idx] = { ...orders[idx], status };
+      demoDb.saveOrders(orders);
     }
-    const orders = demoDb.getOrders();
-    const idx = orders.findIndex((o) => o.id === orderId);
-    if (idx === -1) return { error: 'Pedido no encontrado.' };
-    orders[idx] = { ...orders[idx], status };
-    demoDb.saveOrders(orders);
+
+    if (buyerId) {
+      await notificationService.notifyOrderStatusChange({ order_id: orderId, buyer_id: buyerId, status });
+    }
+    return { error: null };
+  },
+
+  /**
+   * Cancela un pedido dejando un motivo (el emprendedor elige entre razones
+   * predefinidas o escribe una propia) y notifica al comprador con ese motivo.
+   */
+  async cancelOrder(orderId: string, reason: string): Promise<{ error: string | null }> {
+    let buyerId: string | null = null;
+
+    if (isSupabaseConfigured && supabase) {
+      const { data: existing } = await supabase
+        .from('orders')
+        .select('buyer_id')
+        .eq('id', orderId)
+        .single();
+      buyerId = (existing as { buyer_id: string } | null)?.buyer_id ?? null;
+
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: 'cancelado', cancellation_reason: reason })
+        .eq('id', orderId);
+      if (error) return { error: error.message };
+    } else {
+      const orders = demoDb.getOrders();
+      const idx = orders.findIndex((o) => o.id === orderId);
+      if (idx === -1) return { error: 'Pedido no encontrado.' };
+      buyerId = orders[idx].buyer_id;
+      orders[idx] = { ...orders[idx], status: 'cancelado', cancellation_reason: reason };
+      demoDb.saveOrders(orders);
+    }
+
+    if (buyerId) {
+      await notificationService.notifyOrderStatusChange({
+        order_id: orderId,
+        buyer_id: buyerId,
+        status: 'cancelado',
+        reason,
+      });
+    }
     return { error: null };
   },
 };
