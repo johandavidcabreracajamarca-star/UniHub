@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Search, ShoppingBag, User } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { NotificationBell } from './NotificationBell';
 
 export function HomeHeader() {
   const navigate = useNavigate();
@@ -15,12 +16,15 @@ export function HomeHeader() {
           </span>
           <span className="text-lg font-bold text-ink">UniHub</span>
         </div>
-        <button
-          onClick={() => navigate('/profile')}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary-light text-sm font-semibold text-secondary"
-        >
-          {profile?.full_name?.[0]?.toUpperCase() ?? <User size={16} />}
-        </button>
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <button
+            onClick={() => navigate('/profile')}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary-light text-sm font-semibold text-secondary"
+          >
+            {profile?.full_name?.[0]?.toUpperCase() ?? <User size={16} />}
+          </button>
+        </div>
       </div>
 
       <button
