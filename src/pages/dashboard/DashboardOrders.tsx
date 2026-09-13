@@ -10,6 +10,7 @@ import { OrderStatusBadge } from '../../components/OrderStatusBadge';
 import { ProductImage } from '../../components/ProductImage';
 import { EmptyState, RowSkeleton } from '../../components/StateViews';
 import { Select } from '../../components/Input';
+import { CancelOrderModal } from '../../components/CancelOrderModal';
 import { formatCOP, formatDateTime } from '../../utils/format';
 
 const ALL_STATUSES: OrderStatus[] = ['pendiente', 'confirmado', 'en_preparacion', 'completado', 'cancelado'];
@@ -21,6 +22,7 @@ export function DashboardOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [cancelingOrder, setCancelingOrder] = useState<Order | null>(null);
 
   const load = async () => {
     if (!business) return;
@@ -35,9 +37,13 @@ export function DashboardOrders() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [business]);
 
-  const handleStatusChange = async (orderId: string, status: OrderStatus) => {
-    setUpdatingId(orderId);
-    const { error } = await orderService.updateStatus(orderId, status);
+  const handleStatusChange = async (order: Order, status: OrderStatus) => {
+    if (status === 'cancelado') {
+      setCancelingOrder(order);
+      return;
+    }
+    setUpdatingId(order.id);
+    const { error } = await orderService.updateStatus(order.id, status);
     setUpdatingId(null);
     if (error) {
       showToast(error, 'error');
@@ -95,7 +101,7 @@ export function DashboardOrders() {
                 label="Actualizar estado"
                 value={order.status}
                 disabled={updatingId === order.id}
-                onChange={(e) => handleStatusChange(order.id, e.target.value as OrderStatus)}
+                onChange={(e) => handleStatusChange(order, e.target.value as OrderStatus)}
               >
                 {ALL_STATUSES.map((status) => (
                   <option key={status} value={status}>
@@ -107,6 +113,18 @@ export function DashboardOrders() {
           </div>
         );
       })}
+
+      {cancelingOrder && (
+        <CancelOrderModal
+          order={cancelingOrder}
+          onClose={() => setCancelingOrder(null)}
+          onSuccess={() => {
+            setCancelingOrder(null);
+            showToast('Pedido cancelado');
+            load();
+          }}
+        />
+      )}
     </div>
   );
 }
