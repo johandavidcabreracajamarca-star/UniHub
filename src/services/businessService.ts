@@ -82,6 +82,8 @@ export const businessService = {
     faculty_id: string;
     logo?: string | null;
     cover_image?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
   }): Promise<{ business: Business | null; error: string | null }> {
     if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase
@@ -107,6 +109,8 @@ export const businessService = {
       faculty_id: input.faculty_id,
       logo: input.logo ?? null,
       cover_image: input.cover_image ?? null,
+      latitude: input.latitude ?? null,
+      longitude: input.longitude ?? null,
       verified: false, // el usuario nunca puede fijar esto directamente
       rating: 0,
       review_count: 0,
@@ -115,6 +119,30 @@ export const businessService = {
     businesses.unshift(newBusiness);
     demoDb.saveBusinesses(businesses);
     return { business: enrich(newBusiness), error: null };
+  },
+
+  // El propio dueño puede llamar esto en cualquier momento (crear o
+  // actualizar su ubicación) — la política businesses_update_own ya
+  // permite que el dueño actualice su fila, así que no hace falta ninguna
+  // política nueva en Supabase.
+  async updateLocation(
+    id: string,
+    latitude: number,
+    longitude: number
+  ): Promise<{ error: string | null }> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('businesses')
+        .update({ latitude, longitude })
+        .eq('id', id);
+      return { error: error ? error.message : null };
+    }
+    const businesses = demoDb.getBusinesses();
+    const idx = businesses.findIndex((b) => b.id === id);
+    if (idx === -1) return { error: 'Emprendimiento no encontrado.' };
+    businesses[idx] = { ...businesses[idx], latitude, longitude };
+    demoDb.saveBusinesses(businesses);
+    return { error: null };
   },
 
   // Las dos funciones siguientes solo las puede ejecutar con éxito un admin:
