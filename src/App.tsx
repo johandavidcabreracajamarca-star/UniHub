@@ -50,7 +50,7 @@ function App() {
             </Route>
 
             {/* Autenticado + rol emprendedor */}
-            <Route element={<ProtectedRoute requiredRole="emprendedor" />}>
+                        <Route element={<ProtectedRoute requiredRole={['emprendedor', 'admin']} />}>
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<DashboardLayout />}>
                   <Route index element={<DashboardHome />} />
