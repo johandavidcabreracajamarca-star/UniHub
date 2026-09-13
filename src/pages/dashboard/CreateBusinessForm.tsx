@@ -1,12 +1,14 @@
-import { useState, type FormEvent } from 'react';
-import { Store } from 'lucide-react';
+import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { Store, Camera, Link2, X, Loader2 } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { Input, Select, Textarea } from '../../components/Input';
 import { businessService } from '../../services/businessService';
+import { storageService } from '../../services/storageService';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { CATEGORY_LABELS } from '../../types';
 import type { ProductCategory } from '../../types';
+import { processUploadedImage } from '../../utils/imageUpload';
 
 export function CreateBusinessForm({ onCreated }: { onCreated: () => void }) {
   const { profile } = useAuth();
@@ -15,8 +17,31 @@ export function CreateBusinessForm({ onCreated }: { onCreated: () => void }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<ProductCategory>('otros');
+  const [logo, setLogo] = useState('');
+  const [logoBlob, setLogoBlob] = useState<Blob | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [showUrlField, setShowUrlField] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    setUploading(true);
+    setError(null);
+    const { dataUrl, blob, error: uploadError } = await processUploadedImage(file);
+    setUploading(false);
+
+    if (uploadError) {
+      setError(uploadError);
+      return;
+    }
+    setLogo(dataUrl ?? '');
+    setLogoBlob(blob);
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -27,6 +52,27 @@ export function CreateBusinessForm({ onCreated }: { onCreated: () => void }) {
     }
     setLoading(true);
     setError(null);
+
+    // Si eligió un logo nuevo, lo subimos a Supabase Storage ahora y usamos
+    // su enlace público (igual que con las fotos de producto). En modo demo
+    // no hay Storage real, así que seguimos usando el dataUrl local.
+    let finalLogo = logo.trim() || null;
+    if (logoBlob) {
+      const { url, error: uploadError } = await storageService.uploadImage(
+        'business-images',
+        profile.id,
+        logoBlob
+      );
+      if (uploadError) {
+        setLoading(false);
+        setError(`No se pudo subir el logo: ${uploadError}`);
+        return;
+      }
+      if (url) {
+        finalLogo = url;
+      }
+    }
+
     const { error } = await businessService.create({
       owner_id: profile.id,
       name,
@@ -34,6 +80,7 @@ export function CreateBusinessForm({ onCreated }: { onCreated: () => void }) {
       category,
       university_id: profile.university_id,
       faculty_id: profile.faculty_id,
+      logo: finalLogo,
     });
     setLoading(false);
     if (error) {
@@ -65,6 +112,90 @@ export function CreateBusinessForm({ onCreated }: { onCreated: () => void }) {
           onChange={(e) => setName(e.target.value)}
           required
         />
+
+        <div>
+          <span className="mb-1.5 block text-sm font-medium text-ink">Logo del emprendimiento</span>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-ink/20 bg-surface transition-colors hover:border-primary disabled:opacity-60"
+            >
+              {uploading ? (
+                <Loader2 size={20} className="animate-spin text-ink/40" />
+              ) : logo.trim() ? (
+                <img src={logo} alt="Vista previa del logo" className="h-full w-full object-cover" />
+              ) : (
+                <Camera size={20} className="text-ink/40" />
+              )}
+            </button>
+
+            <div className="flex flex-1 flex-col gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                icon={<Camera size={14} />}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                {logo.trim() ? 'Cambiar logo' : 'Elegir logo'}
+              </Button>
+
+              {logo.trim() ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLogo('');
+                    setLogoBlob(null);
+                  }}
+                  className="inline-flex items-center gap-1 self-start text-xs font-medium text-ink/50 hover:text-red-600"
+                >
+                  <X size={13} />
+                  Quitar logo
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowUrlField((v) => !v)}
+                  className="inline-flex items-center gap-1 self-start text-xs font-medium text-ink/50 hover:text-ink"
+                >
+                  <Link2 size={13} />
+                  Usar un enlace en su lugar
+                </button>
+              )}
+            </div>
+          </div>
+
+          {showUrlField && !logo.trim() && (
+            <div className="mt-3">
+              <Input
+                label="Enlace del logo (URL)"
+                type="url"
+                placeholder="https://ejemplo.com/mi-logo.jpg"
+                value={logo}
+                onChange={(e) => {
+                  setLogo(e.target.value);
+                  setLogoBlob(null);
+                }}
+              />
+            </div>
+          )}
+
+          <p className="mt-2 text-xs text-ink/40">Opcional. Puedes agregarlo o cambiarlo después.</p>
+        </div>
+
         <Select label="Categoría" value={category} onChange={(e) => setCategory(e.target.value as ProductCategory)}>
           {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
             <option key={key} value={key}>
