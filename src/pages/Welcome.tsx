@@ -1,9 +1,25 @@
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Sparkles, ShieldCheck, Users } from 'lucide-react';
 import { Button } from '../components/Button';
+import { LoadingScreen } from '../components/LoadingScreen';
+import { useAuth } from '../hooks/useAuth';
 
 export function Welcome() {
   const navigate = useNavigate();
+  const { profile, loading } = useAuth();
+
+  // Mientras se verifica si ya hay una sesión guardada, mostramos la misma
+  // pantalla de carga con marca (evita el parpadeo del login).
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
+  // Si ya hay una sesión activa (Supabase la guarda automáticamente en el
+  // dispositivo), saltamos directo a la app en vez de pedir iniciar sesión
+  // otra vez cada vez que se abre desde la pantalla de inicio.
+  if (profile) {
+    return <Navigate to="/explore" replace />;
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-surface">
