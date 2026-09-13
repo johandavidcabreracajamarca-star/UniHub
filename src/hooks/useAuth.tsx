@@ -12,12 +12,42 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+// ----------------------------------------------------------------------------
+// Expiración por inactividad (~1 semana)
+// ----------------------------------------------------------------------------
+// Supabase mantiene la sesión viva indefinidamente por defecto (el token se
+// refresca solo mientras la app está abierta). Eso es justo lo que NO
+// queríamos: Yohan pidió que, si alguien no abre la app en ~1 semana, se le
+// vuelva a pedir usuario/contraseña la próxima vez, así el token de fondo
+// siga siendo técnicamente válido.
+//
+// Guardamos la fecha de la última vez que la app estuvo activa en
+// localStorage (funciona igual en modo demo, sin depender de Supabase).
+// Al montar la app comparamos contra esa fecha ANTES de refrescarla: si pasó
+// más de una semana, cerramos la sesión nosotros mismos.
+// ----------------------------------------------------------------------------
+const LAST_ACTIVE_KEY = 'unihub_last_active';
+const INACTIVITY_LIMIT_MS = 7 * 24 * 60 * 60 * 1000; // ~1 semana
+
+function touchActivity() {
+  localStorage.setItem(LAST_ACTIVE_KEY, String(Date.now()));
+}
+
+function isInactiveTooLong(): boolean {
+  const raw = localStorage.getItem(LAST_ACTIVE_KEY);
+  if (!raw) return false; // primera vez que se registra en este navegador: no forzamos nada
+  const lastActive = Number(raw);
+  if (Number.isNaN(lastActive)) return false;
+  return Date.now() - lastActive > INACTIVITY_LIMIT_MS;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refresh = async () => {
     const current = await authService.getCurrentProfile();
+    if (current) touchActivity();
     setProfile(current);
     setLoading(false);
   };
@@ -31,7 +61,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const start = Date.now();
 
     (async () => {
-      const current = await authService.getCurrentProfile();
+      let current = await authService.getCurrentProfile();
+
+      if (current && isInactiveTooLong()) {
+        await authService.logout();
+        current = null;
+      }
+      touchActivity();
+
       const remaining = MIN_SPLASH_MS - (Date.now() - start);
       if (remaining > 0) {
         await new Promise((resolve) => setTimeout(resolve, remaining));
@@ -51,6 +88,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const handler = () => refresh();
     window.addEventListener('storage', handler);
     return () => window.removeEventListener('storage', handler);
+  }, []);
+
+  useEffect(() => {
+    // Refresca la marca de actividad cada vez que se vuelve a esta pestaña
+    // (por ejemplo, al reabrir la PWA desde segundo plano sin que la página
+    // se recargue del todo), para que la ventana de 1 semana se cuente desde
+    // el último uso real, no solo desde la última carga completa.
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        touchActivity();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
 
   const logout = async () => {
