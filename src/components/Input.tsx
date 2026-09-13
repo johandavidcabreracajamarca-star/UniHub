@@ -3,17 +3,19 @@ import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTML
 interface FieldWrapperProps {
   label: string;
   error?: string;
+  success?: string;
   hint?: string;
   children: ReactNode;
 }
 
-function FieldWrapper({ label, error, hint, children }: FieldWrapperProps) {
+function FieldWrapper({ label, error, success, hint, children }: FieldWrapperProps) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium text-ink">{label}</span>
       {children}
       {error && <span className="mt-1 block text-xs text-red-600">{error}</span>}
-      {!error && hint && <span className="mt-1 block text-xs text-ink/40">{hint}</span>}
+      {!error && success && <span className="mt-1 block text-xs text-green-600">{success}</span>}
+      {!error && !success && hint && <span className="mt-1 block text-xs text-ink/40">{hint}</span>}
     </label>
   );
 }
@@ -24,19 +26,30 @@ const baseFieldClass =
 interface BaseFieldProps {
   label: string;
   error?: string;
+  success?: string;
   hint?: string;
 }
 
 export function Input({
   label,
   error,
+  success,
   hint,
   className = '',
+  rightElement,
   ...rest
-}: BaseFieldProps & InputHTMLAttributes<HTMLInputElement>) {
+}: BaseFieldProps & InputHTMLAttributes<HTMLInputElement> & { rightElement?: ReactNode }) {
   return (
-    <FieldWrapper label={label} error={error} hint={hint}>
-      <input className={`${baseFieldClass} ${error ? 'border-red-400' : ''} ${className}`} {...rest} />
+    <FieldWrapper label={label} error={error} success={success} hint={hint}>
+      <div className="relative">
+        <input
+          className={`${baseFieldClass} ${rightElement ? 'pr-10' : ''} ${
+            error ? 'border-red-400' : success ? 'border-green-400' : ''
+          } ${className}`}
+          {...rest}
+        />
+        {rightElement && <div className="absolute right-1 top-1/2 -translate-y-1/2">{rightElement}</div>}
+      </div>
     </FieldWrapper>
   );
 }
