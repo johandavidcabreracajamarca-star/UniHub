@@ -15,8 +15,12 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 py-16 px-6 text-center">
-      <div className="mb-1 flex h-12 w-12 items-center justify-center rounded-full bg-ink/5 text-ink/40">
-        {icon ?? <Inbox size={22} />}
+      <div className="relative mb-2 flex h-20 w-20 items-center justify-center">
+        <div className="absolute inset-0 rounded-full bg-primary/5" />
+        <div className="absolute inset-2.5 rounded-full bg-primary/10" />
+        <div className="relative flex h-11 w-11 items-center justify-center rounded-full bg-primary-light text-primary">
+          {icon ?? <Inbox size={22} />}
+        </div>
       </div>
       <p className="text-sm font-medium text-ink">{title}</p>
       {description && <p className="text-sm text-ink/50 max-w-xs">{description}</p>}
@@ -28,8 +32,12 @@ export function EmptyState({
 export function ErrorState({ message, onRetry }: { message?: string; onRetry?: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-16 px-6 text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-500">
-        <AlertCircle size={22} />
+      <div className="relative mb-1 flex h-20 w-20 items-center justify-center">
+        <div className="absolute inset-0 rounded-full bg-red-500/5" />
+        <div className="absolute inset-2.5 rounded-full bg-red-500/10" />
+        <div className="relative flex h-11 w-11 items-center justify-center rounded-full bg-red-50 text-red-500">
+          <AlertCircle size={22} />
+        </div>
       </div>
       <p className="text-sm font-medium text-ink">Algo salió mal. Intenta nuevamente.</p>
       {message && <p className="text-xs text-ink/40 max-w-xs">{message}</p>}
