@@ -23,7 +23,7 @@ export const orderService = {
     if (isSupabaseConfigured && supabase) {
       const { data } = await supabase
         .from('orders')
-        .select('*, businesses(*), order_items(*, products(*))')
+        .select('*, business:businesses(*), items:order_items(*, product:products(*))')
         .eq('buyer_id', buyerId)
         .order('created_at', { ascending: false });
       return (data as Order[]) ?? [];
@@ -39,7 +39,7 @@ export const orderService = {
     if (isSupabaseConfigured && supabase) {
       const { data } = await supabase
         .from('orders')
-        .select('*, order_items(*, products(*)), buyer:profiles(*)')
+        .select('*, items:order_items(*, product:products(*)), buyer:profiles(*)')
         .eq('business_id', businessId)
         .order('created_at', { ascending: false });
       return (data as Order[]) ?? [];
@@ -55,7 +55,7 @@ export const orderService = {
     if (isSupabaseConfigured && supabase) {
       const { data } = await supabase
         .from('orders')
-        .select('*, businesses(*), order_items(*, products(*))')
+        .select('*, business:businesses(*), items:order_items(*, product:products(*))')
         .eq('id', id)
         .single();
       return (data as Order) ?? null;
