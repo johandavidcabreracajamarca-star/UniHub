@@ -2,8 +2,9 @@ import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import type { Product, ProductCategory } from '../types';
 import { demoDb } from '../data/demoDb';
 import { businessService } from './businessService';
+import { distanceToBusiness, type Coordinates } from '../utils/geo';
 
-export type ProductSort = 'recientes' | 'precio_asc' | 'precio_desc' | 'calificacion';
+export type ProductSort = 'recientes' | 'precio_asc' | 'precio_desc' | 'calificacion' | 'cercanos';
 
 export interface ProductFilters {
   query?: string;
@@ -13,9 +14,15 @@ export interface ProductFilters {
   onlyAvailable?: boolean;
   minRating?: number;
   sort?: ProductSort;
+  // ubicación del comprador, solo necesaria cuando sort === 'cercanos'
+  userLocation?: Coordinates | null;
 }
 
-function sortProducts(products: Product[], sort: ProductSort = 'recientes'): Product[] {
+function sortProducts(
+  products: Product[],
+  sort: ProductSort = 'recientes',
+  userLocation?: Coordinates | null
+): Product[] {
   const sorted = [...products];
   switch (sort) {
     case 'precio_asc':
@@ -24,6 +31,17 @@ function sortProducts(products: Product[], sort: ProductSort = 'recientes'): Pro
       return sorted.sort((a, b) => b.price - a.price);
     case 'calificacion':
       return sorted.sort((a, b) => (b.business?.rating ?? 0) - (a.business?.rating ?? 0));
+    case 'cercanos':
+      return sorted.sort((a, b) => {
+        const da = distanceToBusiness(userLocation, a.business);
+        const db = distanceToBusiness(userLocation, b.business);
+        // Los que no tienen ubicación configurada quedan al final, no se
+        // mezclan al azar con los que sí la tienen.
+        if (da == null && db == null) return 0;
+        if (da == null) return 1;
+        if (db == null) return -1;
+        return da - db;
+      });
     case 'recientes':
     default:
       return sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -83,7 +101,7 @@ export const productService = {
       return true;
     });
 
-    return sortProducts(filtered, filters.sort);
+    return sortProducts(filtered, filters.sort, filters.userLocation);
   },
 
   async getById(id: string): Promise<Product | null> {
