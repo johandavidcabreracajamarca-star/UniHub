@@ -1,5 +1,5 @@
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
-import { Store, Camera, Link2, X, Loader2 } from 'lucide-react';
+import { Store, Camera, Link2, X, Loader2, MapPin } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { Input, Select, Textarea } from '../../components/Input';
 import { businessService } from '../../services/businessService';
@@ -21,9 +21,34 @@ export function CreateBusinessForm({ onCreated }: { onCreated: () => void }) {
   const [logoBlob, setLogoBlob] = useState<Blob | null>(null);
   const [uploading, setUploading] = useState(false);
   const [showUrlField, setShowUrlField] = useState(false);
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUseLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError('Tu navegador no permite compartir ubicación.');
+      return;
+    }
+    setLocating(true);
+    setLocationError(null);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLatitude(position.coords.latitude);
+        setLongitude(position.coords.longitude);
+        setLocating(false);
+      },
+      () => {
+        setLocationError('No pudimos obtener tu ubicación. Revisa los permisos del navegador.');
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   const handleFileSelect = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -81,6 +106,8 @@ export function CreateBusinessForm({ onCreated }: { onCreated: () => void }) {
       university_id: profile.university_id,
       faculty_id: profile.faculty_id,
       logo: finalLogo,
+      latitude: latitude ?? undefined,
+      longitude: longitude ?? undefined,
     });
     setLoading(false);
     if (error) {
@@ -194,6 +221,32 @@ export function CreateBusinessForm({ onCreated }: { onCreated: () => void }) {
           )}
 
           <p className="mt-2 text-xs text-ink/40">Opcional. Puedes agregarlo o cambiarlo después.</p>
+        </div>
+
+        <div>
+          <span className="mb-1.5 block text-sm font-medium text-ink">Ubicación</span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            icon={<MapPin size={14} />}
+            onClick={handleUseLocation}
+            disabled={locating}
+          >
+            {locating
+              ? 'Obteniendo ubicación…'
+              : latitude != null
+                ? 'Actualizar mi ubicación'
+                : 'Usar mi ubicación actual'}
+          </Button>
+          {latitude != null && longitude != null && (
+            <p className="mt-2 text-xs text-primary">Ubicación guardada ✓</p>
+          )}
+          {locationError && <p className="mt-2 text-xs text-red-600">{locationError}</p>}
+          <p className="mt-2 text-xs text-ink/40">
+            Opcional. Ayuda a que los compradores cercanos te encuentren más fácil. Puedes
+            agregarla o cambiarla después.
+          </p>
         </div>
 
         <Select label="Categoría" value={category} onChange={(e) => setCategory(e.target.value as ProductCategory)}>
