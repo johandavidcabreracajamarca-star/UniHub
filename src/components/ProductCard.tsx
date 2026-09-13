@@ -2,13 +2,23 @@ import { useNavigate } from 'react-router-dom';
 import { ShoppingBag } from 'lucide-react';
 import type { Product } from '../types';
 import { formatCOP } from '../utils/format';
+import { formatDistance } from '../utils/geo';
 import { ProductImage } from './ProductImage';
 import { VerifiedBadge } from './VerifiedBadge';
 import { StarRating } from './StarRating';
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({
+  product,
+  distanceMeters,
+}: {
+  product: Product;
+  // distancia (en metros) al emprendimiento, cuando se está ordenando por
+  // cercanía y se conoce la ubicación del comprador
+  distanceMeters?: number | null;
+}) {
   const navigate = useNavigate();
   const business = product.business;
+  const distanceLabel = formatDistance(distanceMeters);
 
   return (
     <button
@@ -48,6 +58,7 @@ export function ProductCard({ product }: { product: Product }) {
         {business && (
           <p className="mt-0.5 text-[11px] text-ink/40 truncate">
             {business.university_name} · {business.faculty_name}
+            {distanceLabel && ` · ${distanceLabel}`}
           </p>
         )}
 
