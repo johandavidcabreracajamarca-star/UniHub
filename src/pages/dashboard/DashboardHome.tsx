@@ -1,17 +1,21 @@
-import { useEffect, useState, type ReactNode } from 'react';
-import { Package, ClipboardList, DollarSign, Star, MapPin } from 'lucide-react';
+import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
+import { Package, ClipboardList, DollarSign, Star, MapPin, Camera, Loader2 } from 'lucide-react';
 import { useMyBusiness } from '../../hooks/useMyBusiness';
 import { CreateBusinessForm } from './CreateBusinessForm';
 import { productService } from '../../services/productService';
 import { orderService } from '../../services/orderService';
 import { businessService } from '../../services/businessService';
+import { storageService } from '../../services/storageService';
+import { useAuth } from '../../hooks/useAuth';
 import { VerifiedBadge } from '../../components/VerifiedBadge';
 import { StarRating } from '../../components/StarRating';
 import { RowSkeleton } from '../../components/StateViews';
 import { Button } from '../../components/Button';
 import { formatCOP } from '../../utils/format';
+import { processUploadedImage } from '../../utils/imageUpload';
 
 export function DashboardHome() {
+  const { profile } = useAuth();
   const { business, loading, refresh } = useMyBusiness();
   const [stats, setStats] = useState<{
     activeProducts: number;
@@ -20,6 +24,44 @@ export function DashboardHome() {
   } | null>(null);
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  const handleLogoSelect = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !business || !profile) return;
+
+    setLogoUploading(true);
+    setLogoError(null);
+
+    const { blob, error: processError } = await processUploadedImage(file);
+    if (processError || !blob) {
+      setLogoUploading(false);
+      setLogoError(processError ?? 'No se pudo procesar la imagen.');
+      return;
+    }
+
+    const { url, error: uploadError } = await storageService.uploadImage(
+      'business-images',
+      profile.id,
+      blob
+    );
+    if (uploadError || !url) {
+      setLogoUploading(false);
+      setLogoError(uploadError ?? 'No se pudo subir el logo.');
+      return;
+    }
+
+    const { error } = await businessService.updateLogo(business.id, url);
+    setLogoUploading(false);
+    if (error) {
+      setLogoError(error);
+      return;
+    }
+    refresh();
+  };
 
   const handleUpdateLocation = () => {
     if (!business) return;
@@ -77,19 +119,56 @@ export function DashboardHome() {
   return (
     <div>
       <div className="rounded-card border border-ink/8 bg-white p-4 shadow-card">
-        <div className="flex items-center gap-2">
-          <h2 className="text-base font-bold text-ink">{business.name}</h2>
-          {business.verified ? (
-            <VerifiedBadge />
-          ) : (
-            <span className="rounded-full bg-ink/8 px-2 py-0.5 text-xs font-medium text-ink/50">
-              No verificado
-            </span>
-          )}
+        <div className="flex items-center gap-3">
+          <input
+            ref={logoInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleLogoSelect}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => logoInputRef.current?.click()}
+            disabled={logoUploading}
+            className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-ink/20 bg-surface transition-colors hover:border-primary disabled:opacity-60"
+          >
+            {logoUploading ? (
+              <Loader2 size={18} className="animate-spin text-ink/40" />
+            ) : business.logo?.trim() ? (
+              <img src={business.logo} alt={business.name} className="h-full w-full object-cover" />
+            ) : (
+              <Camera size={18} className="text-ink/40" />
+            )}
+          </button>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h2 className="truncate text-base font-bold text-ink">{business.name}</h2>
+              {business.verified ? (
+                <VerifiedBadge />
+              ) : (
+                <span className="shrink-0 rounded-full bg-ink/8 px-2 py-0.5 text-xs font-medium text-ink/50">
+                  No verificado
+                </span>
+              )}
+            </div>
+            <div className="mt-1">
+              <StarRating rating={business.rating} reviewCount={business.review_count} />
+            </div>
+          </div>
         </div>
-        <div className="mt-1.5">
-          <StarRating rating={business.rating} reviewCount={business.review_count} />
-        </div>
+
+        <button
+          type="button"
+          onClick={() => logoInputRef.current?.click()}
+          disabled={logoUploading}
+          className="mt-2 text-xs font-medium text-primary hover:underline disabled:opacity-60"
+        >
+          {business.logo?.trim() ? 'Cambiar logo' : 'Agregar logo'}
+        </button>
+        {logoError && <p className="mt-1 text-xs text-red-600">{logoError}</p>}
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3">
