@@ -23,7 +23,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    refresh();
+    // Solo en la carga inicial (la del splash) forzamos un mínimo de tiempo
+    // visible, para que el logo se alcance a notar aunque la app cargue muy
+    // rápido. Los refresh() posteriores (login, logout, etc.) no la usan,
+    // para que esas acciones se sigan sintiendo instantáneas.
+    const MIN_SPLASH_MS = 500;
+    const start = Date.now();
+
+    (async () => {
+      const current = await authService.getCurrentProfile();
+      const remaining = MIN_SPLASH_MS - (Date.now() - start);
+      if (remaining > 0) {
+        await new Promise((resolve) => setTimeout(resolve, remaining));
+      }
+      setProfile(current);
+      setLoading(false);
+    })();
 
     if (isSupabaseConfigured && supabase) {
       const { data: listener } = supabase.auth.onAuthStateChange(() => {
