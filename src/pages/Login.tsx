@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag } from 'lucide-react';
+import { ShoppingBag, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { authService } from '../services/authService';
@@ -12,6 +12,7 @@ export function Login() {
   const { refresh } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -57,11 +58,22 @@ export function Login() {
           />
           <Input
             label="Contraseña"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             placeholder="••••••••"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            rightElement={
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="flex h-8 w-8 items-center justify-center rounded-md text-ink/40 transition-colors hover:text-ink/70"
+                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            }
           />
 
           {error && <p className="text-sm text-red-600">{error}</p>}
