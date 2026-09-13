@@ -17,14 +17,18 @@ export function BottomNav() {
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex flex-1 flex-col items-center justify-center gap-1 py-2.5 min-h-[56px] text-[11px] font-medium transition-colors ${
+              `flex flex-1 flex-col items-center justify-center gap-1 py-2.5 min-h-[56px] text-[11px] font-medium transition-colors active:scale-95 ${
                 isActive ? 'text-primary' : 'text-ink/45'
               }`
             }
           >
             {({ isActive }) => (
               <>
-                <Icon size={22} strokeWidth={isActive ? 2.4 : 1.8} />
+                <Icon
+                  size={22}
+                  strokeWidth={isActive ? 2.4 : 1.8}
+                  className={`transition-transform duration-200 ease-out ${isActive ? 'scale-110' : 'scale-100'}`}
+                />
                 {label}
               </>
             )}
