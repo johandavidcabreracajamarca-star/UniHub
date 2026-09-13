@@ -115,6 +115,8 @@ export interface Order {
   business_id: string;
   total: number;
   status: OrderStatus;
+  // motivo que dejó el emprendedor si canceló el pedido (opcional)
+  cancellation_reason?: string | null;
   created_at: string;
   // campos derivados
   business?: Business;
@@ -140,4 +142,13 @@ export interface Review {
   comment: string;
   created_at: string;
   buyer_name?: string;
+}
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  order_id: string;
+  message: string;
+  read: boolean;
+  created_at: string;
 }
