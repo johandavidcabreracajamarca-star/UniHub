@@ -4,7 +4,9 @@ import { ArrowLeft, Camera, Link2, X, Loader2 } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { Input, Select, Textarea } from '../../components/Input';
 import { productService } from '../../services/productService';
+import { storageService } from '../../services/storageService';
 import { useMyBusiness } from '../../hooks/useMyBusiness';
+import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { CATEGORY_LABELS } from '../../types';
 import type { ProductCategory } from '../../types';
@@ -17,6 +19,7 @@ export function ProductForm() {
   const isEditing = Boolean(id);
   const navigate = useNavigate();
   const { business, loading: loadingBusiness } = useMyBusiness();
+  const { profile } = useAuth();
   const { showToast } = useToast();
 
   const [name, setName] = useState('');
@@ -26,6 +29,10 @@ export function ProductForm() {
   const [stock, setStock] = useState('');
   const [available, setAvailable] = useState(true);
   const [image, setImage] = useState('');
+  // Foto recién elegida y comprimida, pendiente de subir a Supabase Storage
+  // cuando se guarde el formulario (no se sube antes para no gastar datos
+  // si el usuario cancela o cambia de foto varias veces).
+  const [imageBlob, setImageBlob] = useState<Blob | null>(null);
 
   const [loadingProduct, setLoadingProduct] = useState(isEditing);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +64,7 @@ export function ProductForm() {
 
     setUploading(true);
     setError(null);
-    const { dataUrl, error: uploadError } = await processUploadedImage(file);
+    const { dataUrl, blob, error: uploadError } = await processUploadedImage(file);
     setUploading(false);
 
     if (uploadError) {
@@ -65,6 +72,7 @@ export function ProductForm() {
       return;
     }
     setImage(dataUrl ?? '');
+    setImageBlob(blob);
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -82,6 +90,27 @@ export function ProductForm() {
     setSaving(true);
     setError(null);
 
+    // Si el usuario eligió una foto nueva, la subimos a Supabase Storage
+    // ahora y usamos su enlace público en vez del dataUrl local (que solo
+    // sirve para la vista previa). En modo demo no hay Storage real, así
+    // que uploadImage no hace nada y seguimos usando el dataUrl de siempre.
+    let finalImage = image.trim() || null;
+    if (imageBlob && profile) {
+      const { url, error: uploadError } = await storageService.uploadImage(
+        'product-images',
+        profile.id,
+        imageBlob
+      );
+      if (uploadError) {
+        setSaving(false);
+        setError(`No se pudo subir la foto: ${uploadError}`);
+        return;
+      }
+      if (url) {
+        finalImage = url;
+      }
+    }
+
     if (isEditing && id) {
       const { error } = await productService.update(id, {
         name,
@@ -90,7 +119,7 @@ export function ProductForm() {
         category,
         stock: stockNum,
         available,
-        image: image.trim() || null,
+        image: finalImage,
       });
       setSaving(false);
       if (error) {
@@ -107,7 +136,7 @@ export function ProductForm() {
         category,
         stock: stockNum,
         available,
-        image: image.trim() || null,
+        image: finalImage,
       });
       setSaving(false);
       if (error) {
@@ -197,7 +226,10 @@ export function ProductForm() {
               {image.trim() ? (
                 <button
                   type="button"
-                  onClick={() => setImage('')}
+                  onClick={() => {
+                    setImage('');
+                    setImageBlob(null);
+                  }}
                   className="inline-flex items-center gap-1 self-start text-xs font-medium text-ink/50 hover:text-red-600"
                 >
                   <X size={13} />
@@ -223,7 +255,10 @@ export function ProductForm() {
                 type="url"
                 placeholder="https://ejemplo.com/mi-foto.jpg"
                 value={image}
-                onChange={(e) => setImage(e.target.value)}
+                onChange={(e) => {
+                  setImage(e.target.value);
+                  setImageBlob(null);
+                }}
               />
             </div>
           )}
