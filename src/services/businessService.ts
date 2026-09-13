@@ -13,6 +13,23 @@ function enrich(business: Business): Business {
   };
 }
 
+interface BusinessRow extends Business {
+  universities?: { name: string } | null;
+  faculties?: { name: string } | null;
+}
+
+// Supabase devuelve los joins embebidos bajo el nombre de la tabla
+// (universities / faculties), no como los campos planos university_name /
+// faculty_name que espera el resto de la app. Esta función los aplana.
+function mapBusinessRow(row: BusinessRow): Business {
+  const { universities, faculties, ...rest } = row;
+  return {
+    ...rest,
+    university_name: universities?.name,
+    faculty_name: faculties?.name,
+  };
+}
+
 export const businessService = {
   async listAll(): Promise<Business[]> {
     if (isSupabaseConfigured && supabase) {
@@ -20,7 +37,7 @@ export const businessService = {
         .from('businesses')
         .select('*, universities(name), faculties(name)')
         .order('created_at', { ascending: false });
-      return (data as Business[]) ?? [];
+      return ((data as BusinessRow[]) ?? []).map(mapBusinessRow);
     }
     return demoDb.getBusinesses().map(enrich);
   },
@@ -37,7 +54,7 @@ export const businessService = {
         .select('*, universities(name), faculties(name)')
         .eq('id', id)
         .single();
-      return (data as Business) ?? null;
+      return data ? mapBusinessRow(data as BusinessRow) : null;
     }
     const business = demoDb.getBusinesses().find((b) => b.id === id);
     return business ? enrich(business) : null;
@@ -98,5 +115,34 @@ export const businessService = {
     businesses.unshift(newBusiness);
     demoDb.saveBusinesses(businesses);
     return { business: enrich(newBusiness), error: null };
+  },
+
+  // Las dos funciones siguientes solo las puede ejecutar con éxito un admin:
+  // la política de seguridad en Supabase (businesses_update_admin) rechaza
+  // el cambio si quien lo intenta no tiene role = 'admin' en su perfil.
+  async setVerified(id: string, verified: boolean): Promise<{ error: string | null }> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase.from('businesses').update({ verified }).eq('id', id);
+      return { error: error ? error.message : null };
+    }
+    const businesses = demoDb.getBusinesses();
+    const idx = businesses.findIndex((b) => b.id === id);
+    if (idx === -1) return { error: 'Emprendimiento no encontrado.' };
+    businesses[idx] = { ...businesses[idx], verified };
+    demoDb.saveBusinesses(businesses);
+    return { error: null };
+  },
+
+  async setSuspended(id: string, suspended: boolean): Promise<{ error: string | null }> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase.from('businesses').update({ suspended }).eq('id', id);
+      return { error: error ? error.message : null };
+    }
+    const businesses = demoDb.getBusinesses();
+    const idx = businesses.findIndex((b) => b.id === id);
+    if (idx === -1) return { error: 'Emprendimiento no encontrado.' };
+    businesses[idx] = { ...businesses[idx], suspended };
+    demoDb.saveBusinesses(businesses);
+    return { error: null };
   },
 };
