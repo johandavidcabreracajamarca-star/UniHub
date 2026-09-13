@@ -21,6 +21,10 @@ import { DashboardProducts } from './pages/dashboard/DashboardProducts';
 import { DashboardOrders } from './pages/dashboard/DashboardOrders';
 import { ProductForm } from './pages/dashboard/ProductForm';
 
+import { AdminLayout } from './pages/admin/AdminLayout';
+import { AdminBusinesses } from './pages/admin/AdminBusinesses';
+import { AdminBusinessDetail } from './pages/admin/AdminBusinessDetail';
+
 function App() {
   return (
     <AuthProvider>
@@ -54,6 +58,16 @@ function App() {
                   <Route path="products/new" element={<ProductForm />} />
                   <Route path="products/:id/edit" element={<ProductForm />} />
                   <Route path="orders" element={<DashboardOrders />} />
+                </Route>
+              </Route>
+            </Route>
+
+            {/* Autenticado + rol admin */}
+            <Route element={<ProtectedRoute requiredRole="admin" />}>
+              <Route element={<AppLayout />}>
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<AdminBusinesses />} />
+                  <Route path="business/:id" element={<AdminBusinessDetail />} />
                 </Route>
               </Route>
             </Route>
