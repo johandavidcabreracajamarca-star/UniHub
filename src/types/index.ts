@@ -3,7 +3,7 @@
 // Reflejan 1:1 el schema de Supabase (supabase/schema.sql)
 // ============================================================================
 
-export type UserRole = 'comprador' | 'emprendedor';
+export type UserRole = 'comprador' | 'emprendedor' | 'admin';
 
 export type OrderStatus =
   | 'pendiente'
@@ -81,6 +81,10 @@ export interface Business {
   verified: boolean;
   rating: number;
   created_at: string;
+  // suspendido por un admin (distinto de "verified"): oculta el negocio y
+  // todos sus productos de la vista pública sin borrar nada. Opcional para
+  // no romper los datos de demo existentes, que nunca lo traen.
+  suspended?: boolean;
   // campos derivados (joins), opcionales para la UI
   university_name?: string;
   faculty_name?: string;
@@ -98,6 +102,9 @@ export interface Product {
   available: boolean;
   stock: number;
   created_at: string;
+  // suspendido por un admin (distinto de "available", que controla el
+  // propio emprendedor): oculta el producto de la vista pública.
+  suspended?: boolean;
   // campos derivados (joins), opcionales para la UI
   business?: Business;
 }
