@@ -102,7 +102,10 @@ export function Orders() {
                       </p>
                       <OrderStatusBadge status={order.status} />
                     </div>
-                    <p className="text-xs text-ink/50">{order.business?.name}</p>
+                                    <p className="text-xs text-ink/50">{order.business?.name}</p>
+                    {order.status === 'cancelado' && order.cancellation_reason && (
+                      <p className="mt-0.5 text-xs text-red-500">Motivo: {order.cancellation_reason}</p>
+                    )}
                     <div className="mt-1 flex items-center justify-between">
                       <span className="text-xs text-ink/40">
                         {item ? `Cantidad: ${item.quantity}` : ''} · {formatDateTime(order.created_at)}
