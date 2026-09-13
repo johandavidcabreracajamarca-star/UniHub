@@ -6,6 +6,7 @@ const SORT_LABELS: Record<ProductSort, string> = {
   precio_asc: 'Precio: menor a mayor',
   precio_desc: 'Precio: mayor a menor',
   calificacion: 'Mejor calificados',
+  cercanos: 'Más cercanos',
 };
 
 interface SortSelectProps {
