@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, LogOut, GraduationCap, Mail, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, LogOut, GraduationCap, Mail, ShieldCheck, Shield } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/Button';
 import { demoUniversities, demoFaculties } from '../data/demoData';
@@ -52,6 +52,21 @@ export function ProfilePage() {
               <LayoutDashboard size={17} />
             </span>
             Panel del emprendedor
+          </span>
+          <span className="text-ink/30">›</span>
+        </button>
+      )}
+
+      {profile.role === 'admin' && (
+        <button
+          onClick={() => navigate('/admin')}
+          className="mt-4 flex w-full items-center justify-between rounded-card border border-ink/8 bg-white p-4 shadow-card hover:bg-ink/5 transition-colors"
+        >
+          <span className="flex items-center gap-3 text-sm font-medium text-ink">
+            <span className="flex h-9 w-9 items-center justify-center rounded-control bg-primary-light text-primary-dark">
+              <Shield size={17} />
+            </span>
+            Panel de administración
           </span>
           <span className="text-ink/30">›</span>
         </button>
