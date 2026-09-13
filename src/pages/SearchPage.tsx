@@ -8,6 +8,7 @@ import { ProductCard } from '../components/ProductCard';
 import { SortSelect } from '../components/SortSelect';
 import { ProductGridSkeleton, EmptyState } from '../components/StateViews';
 import { FilterSheet, type FilterState } from '../components/FilterSheet';
+import { distanceToBusiness, type Coordinates } from '../utils/geo';
 
 const DEFAULT_FILTERS: FilterState = {
   category: 'todas',
@@ -28,6 +29,26 @@ export function SearchPage() {
   const [faculties, setFaculties] = useState<Faculty[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasSearched, setHasSearched] = useState(false);
+  const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
+  const [locationDenied, setLocationDenied] = useState(false);
+
+  // Solo pedimos la ubicación al navegador cuando el usuario realmente
+  // elige ordenar por cercanía — nunca de entrada.
+  const handleSortChange = (value: ProductSort) => {
+    setSort(value);
+    if (value === 'cercanos' && !userLocation && !locationDenied && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+        },
+        () => setLocationDenied(true),
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    }
+  };
 
   useEffect(() => {
     universityService.listUniversities().then(setUniversities);
@@ -45,13 +66,14 @@ export function SearchPage() {
         onlyAvailable: filters.onlyAvailable,
         minRating: filters.minRating || undefined,
         sort,
+        userLocation,
       });
       setProducts(results);
       setLoading(false);
       setHasSearched(true);
     }, 250);
     return () => clearTimeout(timeout);
-  }, [query, filters, sort]);
+  }, [query, filters, sort, userLocation]);
 
   const activeFilterCount =
     (filters.category !== 'todas' ? 1 : 0) +
@@ -102,7 +124,7 @@ export function SearchPage() {
             <span className="text-xs text-ink/50">
               {products.length} {products.length === 1 ? 'resultado' : 'resultados'}
             </span>
-            <SortSelect value={sort} onChange={setSort} />
+            <SortSelect value={sort} onChange={handleSortChange} />
           </div>
         )}
 
@@ -119,7 +141,11 @@ export function SearchPage() {
         {!loading && products.length > 0 && (
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
             {products.map((p) => (
-              <ProductCard key={p.id} product={p} />
+              <ProductCard
+                key={p.id}
+                product={p}
+                distanceMeters={distanceToBusiness(userLocation, p.business)}
+              />
             ))}
           </div>
         )}
