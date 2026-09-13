@@ -67,7 +67,12 @@ export const notificationService = {
     };
 
     if (isSupabaseConfigured && supabase) {
-      await supabase.from('notifications').insert(notification);
+      const { error } = await supabase.from('notifications').insert(notification);
+      if (error) {
+        // No bloqueamos el pedido por esto, pero lo dejamos visible en
+        // consola para poder diagnosticar (ej. RLS, tabla faltante).
+        console.error('No se pudo crear la notificación:', error.message);
+      }
       return;
     }
     const items = demoDb.getNotifications();
