@@ -1,12 +1,14 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Package, ClipboardList, DollarSign, Star } from 'lucide-react';
+import { Package, ClipboardList, DollarSign, Star, MapPin } from 'lucide-react';
 import { useMyBusiness } from '../../hooks/useMyBusiness';
 import { CreateBusinessForm } from './CreateBusinessForm';
 import { productService } from '../../services/productService';
 import { orderService } from '../../services/orderService';
+import { businessService } from '../../services/businessService';
 import { VerifiedBadge } from '../../components/VerifiedBadge';
 import { StarRating } from '../../components/StarRating';
 import { RowSkeleton } from '../../components/StateViews';
+import { Button } from '../../components/Button';
 import { formatCOP } from '../../utils/format';
 
 export function DashboardHome() {
@@ -16,6 +18,38 @@ export function DashboardHome() {
     totalOrders: number;
     totalSales: number;
   } | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+
+  const handleUpdateLocation = () => {
+    if (!business) return;
+    if (!navigator.geolocation) {
+      setLocationError('Tu navegador no permite compartir ubicación.');
+      return;
+    }
+    setLocating(true);
+    setLocationError(null);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { error } = await businessService.updateLocation(
+          business.id,
+          position.coords.latitude,
+          position.coords.longitude
+        );
+        setLocating(false);
+        if (error) {
+          setLocationError(error);
+          return;
+        }
+        refresh();
+      },
+      () => {
+        setLocationError('No pudimos obtener tu ubicación. Revisa los permisos del navegador.');
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   useEffect(() => {
     if (!business) return;
@@ -91,6 +125,30 @@ export function DashboardHome() {
           revisando tu identidad universitaria; no puedes activarla manualmente.
         </div>
       )}
+
+      <div className="mt-4 rounded-card border border-ink/8 bg-white p-3.5 shadow-card">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium text-ink">Ubicación</p>
+            <p className="mt-0.5 text-xs text-ink/50">
+              {business.latitude != null && business.longitude != null
+                ? 'Los compradores cercanos pueden encontrarte más fácil al ordenar por "Más cercanos".'
+                : 'Agrega tu ubicación para aparecer cuando alguien ordene por "Más cercanos".'}
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            icon={<MapPin size={14} />}
+            onClick={handleUpdateLocation}
+            loading={locating}
+          >
+            {business.latitude != null ? 'Actualizar' : 'Agregar'}
+          </Button>
+        </div>
+        {locationError && <p className="mt-2 text-xs text-red-600">{locationError}</p>}
+      </div>
     </div>
   );
 }
