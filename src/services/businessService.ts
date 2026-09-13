@@ -121,6 +121,21 @@ export const businessService = {
     return { business: enrich(newBusiness), error: null };
   },
 
+  // El propio dueño puede cambiar su logo cuando quiera (por ejemplo si
+  // creó su emprendimiento antes de que existiera esta opción).
+  async updateLogo(id: string, logo: string | null): Promise<{ error: string | null }> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase.from('businesses').update({ logo }).eq('id', id);
+      return { error: error ? error.message : null };
+    }
+    const businesses = demoDb.getBusinesses();
+    const idx = businesses.findIndex((b) => b.id === id);
+    if (idx === -1) return { error: 'Emprendimiento no encontrado.' };
+    businesses[idx] = { ...businesses[idx], logo };
+    demoDb.saveBusinesses(businesses);
+    return { error: null };
+  },
+
   // El propio dueño puede llamar esto en cualquier momento (crear o
   // actualizar su ubicación) — la política businesses_update_own ya
   // permite que el dueño actualice su fila, así que no hace falta ninguna
