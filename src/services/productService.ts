@@ -151,7 +151,9 @@ export const productService = {
 
   async update(
     id: string,
-    changes: Partial<Pick<Product, 'name' | 'description' | 'price' | 'category' | 'image' | 'stock' | 'available'>>
+    changes: Partial
+      Pick<Product, 'name' | 'description' | 'price' | 'category' | 'image' | 'stock' | 'available'>
+    >
   ): Promise<{ error: string | null }> {
     if (isSupabaseConfigured && supabase) {
       const { error } = await supabase.from('products').update(changes).eq('id', id);
@@ -168,5 +170,21 @@ export const productService = {
 
   async setAvailability(id: string, available: boolean): Promise<{ error: string | null }> {
     return this.update(id, { available });
+  },
+
+  // Solo un admin puede suspender/reactivar un producto — la política
+  // products_update_admin en Supabase rechaza el cambio para cualquier otro
+  // usuario, incluido el propio dueño del emprendimiento.
+  async setSuspended(id: string, suspended: boolean): Promise<{ error: string | null }> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase.from('products').update({ suspended }).eq('id', id);
+      return { error: error ? error.message : null };
+    }
+    const products = demoDb.getProducts();
+    const idx = products.findIndex((p) => p.id === id);
+    if (idx === -1) return { error: 'Producto no encontrado.' };
+    products[idx] = { ...products[idx], suspended };
+    demoDb.saveProducts(products);
+    return { error: null };
   },
 };
