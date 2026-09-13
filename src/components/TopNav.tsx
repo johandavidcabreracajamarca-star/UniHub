@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Compass, Search, Receipt, User, ShoppingBag } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { NotificationBell } from './NotificationBell';
 
 const items = [
   { to: '/explore', label: 'Explorar', icon: Compass },
@@ -42,17 +43,20 @@ export function TopNav() {
           ))}
         </nav>
 
-        <button
-          onClick={() => navigate('/profile')}
-          className="flex items-center gap-2 rounded-control py-1.5 pl-1.5 pr-3 hover:bg-ink/5"
-        >
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary-light text-sm font-semibold text-secondary">
-            {profile?.full_name?.[0]?.toUpperCase() ?? <User size={16} />}
-          </span>
-          <span className="text-sm font-medium text-ink">
-            {profile?.full_name?.split(' ')[0] ?? 'Perfil'}
-          </span>
-        </button>
+        <div className="flex items-center gap-2">
+          <NotificationBell />
+          <button
+            onClick={() => navigate('/profile')}
+            className="flex items-center gap-2 rounded-control py-1.5 pl-1.5 pr-3 hover:bg-ink/5"
+          >
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary-light text-sm font-semibold text-secondary">
+              {profile?.full_name?.[0]?.toUpperCase() ?? <User size={16} />}
+            </span>
+            <span className="text-sm font-medium text-ink">
+              {profile?.full_name?.split(' ')[0] ?? 'Perfil'}
+            </span>
+          </button>
+        </div>
       </div>
     </header>
   );
