@@ -13,7 +13,7 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <button
       onClick={() => navigate(`/product/${product.id}`)}
-      className="group text-left w-full rounded-card bg-white shadow-card hover:shadow-card-hover transition-shadow overflow-hidden border border-ink/5"
+      className="group text-left w-full rounded-card bg-white shadow-card hover:shadow-card-hover overflow-hidden border border-ink/5 transition-all duration-200 ease-out hover:-translate-y-1 active:scale-[0.98] active:shadow-card"
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden">
         <ProductImage
@@ -57,7 +57,7 @@ export function ProductCard({ product }: { product: Product }) {
             {business && <StarRating rating={business.rating} size={12} />}
           </div>
           <span
-            className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-primary text-white shrink-0 group-hover:bg-primary-dark transition-colors"
+            className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-primary text-white shrink-0 transition-all duration-200 group-hover:bg-primary-dark group-hover:scale-110 group-active:scale-95"
             aria-label="Comprar"
           >
             <ShoppingBag size={16} />
