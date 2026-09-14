@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Ban, ShieldOff } from 'lucide-react';
+import { ArrowLeft, Ban, ShieldOff, Trash2 } from 'lucide-react';
 import type { Business, Product } from '../../types';
 import { CATEGORY_LABELS } from '../../types';
 import { businessService } from '../../services/businessService';
@@ -21,6 +21,7 @@ export function AdminBusinessDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const load = async () => {
     if (!id) return;
@@ -57,6 +58,23 @@ export function AdminBusinessDetail() {
       prev.map((p) => (p.id === product.id ? { ...p, suspended: !p.suspended } : p))
     );
     showToast(!product.suspended ? 'Producto suspendido' : 'Producto reactivado');
+  };
+
+  const handleDeleteProduct = async (product: Product) => {
+    const confirmed = window.confirm(
+      `¿Eliminar "${product.name}" de forma permanente? Esta acción no se puede deshacer.`
+    );
+    if (!confirmed) return;
+
+    setDeletingId(product.id);
+    const { error } = await productService.delete(product.id);
+    setDeletingId(null);
+    if (error) {
+      showToast(error, 'error');
+      return;
+    }
+    setProducts((prev) => prev.filter((p) => p.id !== product.id));
+    showToast('Producto eliminado');
   };
 
   if (loading) return <RowSkeleton count={4} />;
@@ -114,15 +132,26 @@ export function AdminBusinessDetail() {
                 </div>
                 <p className="text-xs text-ink/50">{formatCOP(p.price)}</p>
               </div>
-              <Button
-                size="sm"
-                variant={p.suspended ? 'outline' : 'danger'}
-                loading={pendingId === p.id}
-                onClick={() => handleToggleProductSuspended(p)}
-                icon={p.suspended ? <ShieldOff size={14} /> : <Ban size={14} />}
-              >
-                {p.suspended ? 'Reactivar' : 'Suspender'}
-              </Button>
+              <div className="flex shrink-0 items-center gap-2">
+                <Button
+                  size="sm"
+                  variant={p.suspended ? 'outline' : 'danger'}
+                  loading={pendingId === p.id}
+                  disabled={deletingId === p.id}
+                  onClick={() => handleToggleProductSuspended(p)}
+                  icon={p.suspended ? <ShieldOff size={14} /> : <Ban size={14} />}
+                >
+                  {p.suspended ? 'Reactivar' : 'Suspender'}
+                </Button>
+                <button
+                  onClick={() => handleDeleteProduct(p)}
+                  disabled={deletingId === p.id || pendingId === p.id}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-control border border-ink/12 text-ink/60 hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
+                  aria-label="Eliminar producto"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
           ))}
         </div>
