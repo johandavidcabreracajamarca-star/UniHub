@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Ban, ShieldOff, Trash2 } from 'lucide-react';
+import { ArrowLeft, Ban, ShieldOff, Trash2, Plus } from 'lucide-react';
 import type { Business, Product } from '../../types';
 import { CATEGORY_LABELS } from '../../types';
 import { businessService } from '../../services/businessService';
@@ -67,7 +67,30 @@ export function AdminBusinessDetail() {
     if (!confirmed) return;
 
     setDeletingId(product.id);
-    const { error } = await productService.delete(product.id);
+    const { error, blocked } = await productService.delete(product.id);
+
+    // Bloqueado porque el producto ya tiene pedidos asociados — como admin,
+    // se le ofrece forzar el borrado igual (el pedido conserva su historial,
+    // solo pierde la referencia a este producto puntual).
+    if (blocked) {
+      const forceConfirmed = window.confirm(
+        `${error}\n\n¿Quieres forzar el borrado de todas formas? Los pedidos que incluían "${product.name}" se conservarán, pero ya no mostrarán este producto.`
+      );
+      if (forceConfirmed) {
+        const forced = await productService.forceDeleteAsAdmin(product.id);
+        setDeletingId(null);
+        if (forced.error) {
+          showToast(forced.error, 'error');
+          return;
+        }
+        setProducts((prev) => prev.filter((p) => p.id !== product.id));
+        showToast('Producto eliminado (borrado forzado)');
+        return;
+      }
+      setDeletingId(null);
+      return;
+    }
+
     setDeletingId(null);
     if (error) {
       showToast(error, 'error');
@@ -106,9 +129,17 @@ export function AdminBusinessDetail() {
         <p className="mt-2 text-sm text-ink/70">{business.description}</p>
       </div>
 
-      <h3 className="mb-3 mt-6 text-sm font-semibold text-ink">
-        Productos ({products.length})
-      </h3>
+      <div className="mb-3 mt-6 flex items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold text-ink">Productos ({products.length})</h3>
+        <Button
+          size="sm"
+          variant="outline"
+          icon={<Plus size={14} />}
+          onClick={() => navigate(`/admin/business/${id}/products/new`)}
+        >
+          Crear producto
+        </Button>
+      </div>
 
       {products.length === 0 ? (
         <EmptyState title="Este emprendimiento aún no tiene productos." />
