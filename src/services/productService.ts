@@ -167,11 +167,32 @@ export const productService = {
     return { product: newProduct, error: null };
   },
 
+  // OJO: antes esta función solo escribía en demoDb sin importar si Supabase
+  // estaba configurado — es decir, editar un producto en producción no
+  // guardaba nada de verdad en la base de datos real. Corregido para que
+  // siga el mismo patrón que el resto de funciones de este archivo.
   async update(
     id: string,
-    changes: Partial<Pick<Product, 'name' | 'description' | 'price' | 'category' | 'image' | 'stock' | 'available'>>
+    changes: Partial
+      Pick
+        Product,
+        | 'name'
+        | 'description'
+        | 'price'
+        | 'category'
+        | 'image'
+        | 'stock'
+        | 'available'
+        | 'discount_percent'
+        | 'discount_starts_at'
+        | 'discount_ends_at'
+      >
+    >
   ): Promise<{ error: string | null }> {
-
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase.from('products').update(changes).eq('id', id);
+      return { error: error ? error.message : null };
+    }
     const products = demoDb.getProducts();
     const idx = products.findIndex((p) => p.id === id);
     if (idx === -1) return { error: 'Producto no encontrado.' };
