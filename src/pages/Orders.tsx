@@ -98,7 +98,7 @@ export function Orders() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <p className="text-sm font-semibold text-ink line-clamp-1">
-                        {item?.product?.name ?? 'Producto'}
+                        {item?.product?.name ?? 'Producto eliminado'}
                       </p>
                       <OrderStatusBadge status={order.status} />
                     </div>
