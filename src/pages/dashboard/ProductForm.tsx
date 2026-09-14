@@ -5,12 +5,13 @@ import { Button } from '../../components/Button';
 import { Input, Select, Textarea } from '../../components/Input';
 import { productService } from '../../services/productService';
 import { storageService } from '../../services/storageService';
+import { businessService } from '../../services/businessService';
 import { useMyBusiness } from '../../hooks/useMyBusiness';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { CATEGORY_LABELS } from '../../types';
-import type { ProductCategory } from '../../types';
-import { RowSkeleton } from '../../components/StateViews';
+import type { ProductCategory, Business } from '../../types';
+import { RowSkeleton, ErrorState } from '../../components/StateViews';
 import { ProductImage } from '../../components/ProductImage';
 import { processUploadedImage } from '../../utils/imageUpload';
 
@@ -24,12 +25,32 @@ function toDatetimeLocalValue(iso: string): string {
 }
 
 export function ProductForm() {
-  const { id } = useParams<{ id: string }>();
+  const { id, businessId: adminBusinessId } = useParams<{ id?: string; businessId?: string }>();
   const isEditing = Boolean(id);
+  // Cuando la URL trae businessId (ruta de admin: /admin/business/:businessId/products/new),
+  // el admin está creando un producto para un negocio que no es el suyo —
+  // en vez de tomar el negocio del usuario logueado (useMyBusiness), se
+  // carga ese negocio puntual por id.
+  const isAdminCreate = Boolean(adminBusinessId) && !isEditing;
   const navigate = useNavigate();
-  const { business, loading: loadingBusiness } = useMyBusiness();
+  const { business: ownBusiness, loading: loadingOwnBusiness } = useMyBusiness();
+  const [adminBusiness, setAdminBusiness] = useState<Business | null>(null);
+  const [loadingAdminBusiness, setLoadingAdminBusiness] = useState(isAdminCreate);
   const { profile } = useAuth();
   const { showToast } = useToast();
+
+  const business = isAdminCreate ? adminBusiness : ownBusiness;
+  const loadingBusiness = isAdminCreate ? loadingAdminBusiness : loadingOwnBusiness;
+  const backPath = isAdminCreate ? `/admin/business/${adminBusinessId}` : '/dashboard/products';
+  const backLabel = isAdminCreate ? 'Volver al negocio' : 'Volver a mis productos';
+
+  useEffect(() => {
+    if (!isAdminCreate || !adminBusinessId) return;
+    businessService.getById(adminBusinessId).then((b) => {
+      setAdminBusiness(b);
+      setLoadingAdminBusiness(false);
+    });
+  }, [isAdminCreate, adminBusinessId]);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -197,20 +218,29 @@ export function ProductForm() {
       showToast('Producto creado con éxito');
     }
 
-    navigate('/dashboard/products');
+    navigate(backPath);
   };
 
   if (loadingBusiness || loadingProduct) return <RowSkeleton count={3} />;
+  if (isAdminCreate && !business) {
+    return <ErrorState message="No se encontró ese negocio." onRetry={() => navigate('/admin')} />;
+  }
 
   return (
     <div>
       <button
-        onClick={() => navigate('/dashboard/products')}
+        onClick={() => navigate(backPath)}
         className="mb-4 flex items-center gap-1.5 text-sm font-medium text-ink/60"
       >
         <ArrowLeft size={16} />
-        Volver a mis productos
+        {backLabel}
       </button>
+
+      {isAdminCreate && business && (
+        <p className="mb-3 text-xs font-medium text-ink/50">
+          Creando producto para <span className="text-ink">{business.name}</span> (como admin)
+        </p>
+      )}
 
       <h2 className="mb-4 text-base font-bold text-ink">
         {isEditing ? 'Editar producto' : 'Crear producto'}
