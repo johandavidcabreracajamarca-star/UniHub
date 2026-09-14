@@ -10,6 +10,7 @@ import { Button } from '../../components/Button';
 import { ProductImage } from '../../components/ProductImage';
 import { EmptyState, RowSkeleton } from '../../components/StateViews';
 import { formatCOP } from '../../utils/format';
+import { isProductOnSale } from '../../utils/discount';
 
 export function DashboardProducts() {
   const { business, loading: loadingBusiness, refresh: refreshBusiness } = useMyBusiness();
@@ -108,6 +109,9 @@ export function DashboardProducts() {
                   <span className={product.available ? 'text-primary' : 'text-red-500'}>
                     {product.available ? 'Disponible' : 'Desactivado'}
                   </span>
+                  {isProductOnSale(product) && (
+                    <span className="ml-1 font-medium text-red-600">· En oferta</span>
+                  )}
                 </p>
               </div>
               <div className="flex shrink-0 flex-col gap-1.5">
