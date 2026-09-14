@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Package, Pencil, Eye, EyeOff } from 'lucide-react';
+import { Plus, Package, Pencil, Eye, EyeOff, Trash2 } from 'lucide-react';
 import type { Product } from '../../types';
 import { useMyBusiness } from '../../hooks/useMyBusiness';
 import { productService } from '../../services/productService';
@@ -19,6 +19,7 @@ export function DashboardProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const load = async () => {
     if (!business) return;
@@ -42,6 +43,23 @@ export function DashboardProducts() {
       return;
     }
     showToast(product.available ? 'Producto desactivado' : 'Producto activado');
+    load();
+  };
+
+  const handleDelete = async (product: Product) => {
+    const confirmed = window.confirm(
+      `¿Eliminar "${product.name}"? Esta acción no se puede deshacer.`
+    );
+    if (!confirmed) return;
+
+    setDeletingId(product.id);
+    const { error } = await productService.delete(product.id);
+    setDeletingId(null);
+    if (error) {
+      showToast(error, 'error');
+      return;
+    }
+    showToast('Producto eliminado');
     load();
   };
 
@@ -102,11 +120,19 @@ export function DashboardProducts() {
                 </button>
                 <button
                   onClick={() => toggleAvailability(product)}
-                  disabled={togglingId === product.id}
+                  disabled={togglingId === product.id || deletingId === product.id}
                   className="flex h-8 w-8 items-center justify-center rounded-control border border-ink/12 text-ink/60 hover:bg-ink/5 disabled:opacity-40"
                   aria-label={product.available ? 'Desactivar producto' : 'Activar producto'}
                 >
                   {product.available ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+                <button
+                  onClick={() => handleDelete(product)}
+                  disabled={deletingId === product.id}
+                  className="flex h-8 w-8 items-center justify-center rounded-control border border-ink/12 text-ink/60 hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
+                  aria-label="Eliminar producto"
+                >
+                  <Trash2 size={14} />
                 </button>
               </div>
             </div>
