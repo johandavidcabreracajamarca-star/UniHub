@@ -5,13 +5,13 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#4A2E22', // Café tostado — identidad "Tinto y Papel"
-          dark: '#331F16',
-          light: '#E8DFD3',
+          DEFAULT: '#3F5A3A', // Verde musgo — identidad "Tinto y Papel" (remix con verde de primario)
+          dark: '#2A3E27',
+          light: '#DEE6D8',
         },
         secondary: {
-          DEFAULT: '#5B6B4E', // Verde musgo — distingue elementos como "verificado" sin competir con el primario
-          light: '#E4E8DC',
+          DEFAULT: '#4A2E22', // Café tostado — distingue elementos como "verificado" sin competir con el primario
+          light: '#E8DFD3',
         },
         accent: {
           DEFAULT: '#B1502B', // Ladrillo/cobre — resalta datos clave (precios, calificaciones, CTAs secundarios)
@@ -24,8 +24,8 @@ export default {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
-        card: '0 1px 2px 0 rgba(74, 46, 34, 0.05), 0 1px 3px 0 rgba(74, 46, 34, 0.08)',
-        'card-hover': '0 4px 12px 0 rgba(74, 46, 34, 0.10)',
+        card: '0 1px 2px 0 rgba(63, 90, 58, 0.05), 0 1px 3px 0 rgba(63, 90, 58, 0.08)',
+        'card-hover': '0 4px 12px 0 rgba(63, 90, 58, 0.10)',
       },
       borderRadius: {
         card: '16px',
