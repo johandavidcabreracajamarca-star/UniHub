@@ -5,27 +5,27 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#1B2A4A', // Azul marino — Profesionalismo, confianza
-          dark: '#12203A',
-          light: '#E3E7EE',
+          DEFAULT: '#4A2E22', // Café tostado — identidad "Tinto y Papel"
+          dark: '#331F16',
+          light: '#E8DFD3',
         },
         secondary: {
-          DEFAULT: '#4A6FA5', // Azul medio — distingue elementos como "verificado" sin competir con el primario
-          light: '#E3E9F2',
+          DEFAULT: '#5B6B4E', // Verde musgo — distingue elementos como "verificado" sin competir con el primario
+          light: '#E4E8DC',
         },
         accent: {
-          DEFAULT: '#C99A3A', // Dorado/mostaza — resalta datos clave (precios, calificaciones, CTAs secundarios)
-          light: '#F5E9D0',
+          DEFAULT: '#B1502B', // Ladrillo/cobre — resalta datos clave (precios, calificaciones, CTAs secundarios)
+          light: '#F0D2C0',
         },
-        surface: '#E8E9EB', // Gris claro — fondos neutros
-        ink: '#1F2937', // Texto — se mantiene oscuro y neutro para buena legibilidad
+        surface: '#EDEAE3', // Papel/piedra clara — fondos neutros
+        ink: '#2A2320', // Texto — café oscuro, cálido y con buena legibilidad
       },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
-        card: '0 1px 2px 0 rgba(27, 42, 74, 0.05), 0 1px 3px 0 rgba(27, 42, 74, 0.08)',
-        'card-hover': '0 4px 12px 0 rgba(27, 42, 74, 0.10)',
+        card: '0 1px 2px 0 rgba(74, 46, 34, 0.05), 0 1px 3px 0 rgba(74, 46, 34, 0.08)',
+        'card-hover': '0 4px 12px 0 rgba(74, 46, 34, 0.10)',
       },
       borderRadius: {
         card: '16px',
