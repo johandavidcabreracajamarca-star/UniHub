@@ -4,6 +4,7 @@ import { X, Minus, Plus, CheckCircle2 } from 'lucide-react';
 import type { Product } from '../types';
 import { Button } from './Button';
 import { formatCOP } from '../utils/format';
+import { isProductOnSale, getDiscountedPrice } from '../utils/discount';
 import { orderService } from '../services/orderService';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
@@ -25,7 +26,12 @@ export function PurchaseModal({ product, onClose }: PurchaseModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const total = product.price * quantity;
+  // Si el producto está en oferta, el comprador paga el precio con
+  // descuento — mostrarlo tachado en la tarjeta no serviría de nada si al
+  // final se le sigue cobrando el precio normal.
+  const onSale = isProductOnSale(product);
+  const unitPrice = onSale ? getDiscountedPrice(product) : product.price;
+  const total = unitPrice * quantity;
 
   const handleConfirm = async () => {
     if (!profile) return;
@@ -36,7 +42,7 @@ export function PurchaseModal({ product, onClose }: PurchaseModalProps) {
       business_id: product.business_id,
       product_id: product.id,
       quantity,
-      unit_price: product.price,
+      unit_price: unitPrice,
     });
     setLoading(false);
     if (error) {
@@ -65,7 +71,12 @@ export function PurchaseModal({ product, onClose }: PurchaseModalProps) {
             <div className="flex items-center gap-3 rounded-card bg-surface p-3">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-ink truncate">{product.name}</p>
-                <p className="text-sm text-ink/50">{formatCOP(product.price)} c/u</p>
+                <p className="text-sm text-ink/50">
+                  {onSale && (
+                    <span className="mr-1.5 text-ink/40 line-through">{formatCOP(product.price)}</span>
+                  )}
+                  {formatCOP(unitPrice)} c/u
+                </p>
               </div>
             </div>
 
