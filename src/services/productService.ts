@@ -6,6 +6,20 @@ import { distanceToBusiness, type Coordinates } from '../utils/geo';
 
 export type ProductSort = 'recientes' | 'precio_asc' | 'precio_desc' | 'calificacion' | 'cercanos';
 
+// Campos que se pueden editar en un producto ya existente.
+export interface ProductUpdateInput {
+  name?: string;
+  description?: string;
+  price?: number;
+  category?: ProductCategory;
+  image?: string | null;
+  stock?: number;
+  available?: boolean;
+  discount_percent?: number | null;
+  discount_starts_at?: string | null;
+  discount_ends_at?: string | null;
+}
+
 export interface ProductFilters {
   query?: string;
   category?: ProductCategory | 'todas';
@@ -171,24 +185,7 @@ export const productService = {
   // estaba configurado — es decir, editar un producto en producción no
   // guardaba nada de verdad en la base de datos real. Corregido para que
   // siga el mismo patrón que el resto de funciones de este archivo.
-  async update(
-    id: string,
-    changes: Partial
-      Pick
-        Product,
-        | 'name'
-        | 'description'
-        | 'price'
-        | 'category'
-        | 'image'
-        | 'stock'
-        | 'available'
-        | 'discount_percent'
-        | 'discount_starts_at'
-        | 'discount_ends_at'
-      >
-    >
-  ): Promise<{ error: string | null }> {
+  async update(id: string, changes: ProductUpdateInput): Promise<{ error: string | null }> {
     if (isSupabaseConfigured && supabase) {
       const { error } = await supabase.from('products').update(changes).eq('id', id);
       return { error: error ? error.message : null };
