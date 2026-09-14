@@ -3,6 +3,7 @@ import { ShoppingBag } from 'lucide-react';
 import type { Product } from '../types';
 import { formatCOP } from '../utils/format';
 import { formatDistance } from '../utils/geo';
+import { isProductOnSale, getDiscountedPrice } from '../utils/discount';
 import { ProductImage } from './ProductImage';
 import { VerifiedBadge } from './VerifiedBadge';
 import { StarRating } from './StarRating';
@@ -19,6 +20,8 @@ export function ProductCard({
   const navigate = useNavigate();
   const business = product.business;
   const distanceLabel = formatDistance(distanceMeters);
+  const onSale = isProductOnSale(product);
+  const finalPrice = onSale ? getDiscountedPrice(product) : product.price;
 
   return (
     <button
@@ -40,6 +43,11 @@ export function ProductCard({
               Agotado
             </span>
           </div>
+        )}
+        {onSale && (
+          <span className="absolute left-2 top-2 rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-semibold text-white">
+            -{product.discount_percent}% OFF
+          </span>
         )}
       </div>
 
@@ -64,7 +72,14 @@ export function ProductCard({
 
         <div className="mt-2 flex items-center justify-between">
           <div className="flex flex-col gap-0.5">
-            <span className="text-base font-semibold text-ink">{formatCOP(product.price)}</span>
+            {onSale ? (
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-base font-semibold text-ink">{formatCOP(finalPrice)}</span>
+                <span className="text-xs text-ink/40 line-through">{formatCOP(product.price)}</span>
+              </div>
+            ) : (
+              <span className="text-base font-semibold text-ink">{formatCOP(product.price)}</span>
+            )}
             {business && <StarRating rating={business.rating} size={12} />}
           </div>
           <span
