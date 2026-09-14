@@ -109,6 +109,12 @@ export interface Product {
   // suspendido por un admin (distinto de "available", que controla el
   // propio emprendedor): oculta el producto de la vista pública.
   suspended?: boolean;
+  // descuento opcional que configura el propio emprendedor. Solo está
+  // activo mientras la fecha/hora actual esté dentro de
+  // [discount_starts_at, discount_ends_at] — ver src/utils/discount.ts.
+  discount_percent?: number | null;
+  discount_starts_at?: string | null;
+  discount_ends_at?: string | null;
   // campos derivados (joins), opcionales para la UI
   business?: Business;
 }
