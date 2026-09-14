@@ -206,8 +206,11 @@ export const productService = {
   // ya existente en Supabase, no hace falta nada nuevo ahí). Si el producto
   // ya tiene pedidos asociados, la base de datos rechaza el borrado (para no
   // perder el historial de esos pedidos) — en ese caso avisamos que lo
-  // desactive en vez de borrarlo.
-  async delete(id: string): Promise<{ error: string | null }> {
+  // desactive en vez de borrarlo. `blocked: true` le dice a quien llama que
+  // el borrado normal fue rechazado específicamente por esa razón (y no por
+  // otro error), para poder ofrecer un "forzar borrado" (solo admin, ver
+  // forceDeleteAsAdmin) en vez de solo mostrar el mensaje.
+  async delete(id: string): Promise<{ error: string | null; blocked?: boolean }> {
     if (isSupabaseConfigured && supabase) {
       const { error } = await supabase.from('products').delete().eq('id', id);
       if (error) {
@@ -215,11 +218,29 @@ export const productService = {
           return {
             error:
               'No puedes eliminar este producto porque ya tiene pedidos asociados. Puedes desactivarlo en su lugar.',
+            blocked: true,
           };
         }
         return { error: error.message };
       }
       return { error: null };
+    }
+    const products = demoDb.getProducts();
+    demoDb.saveProducts(products.filter((p) => p.id !== id));
+    return { error: null };
+  },
+
+  // Solo un admin puede forzar el borrado de un producto que ya tiene
+  // pedidos asociados (por ejemplo, un producto bugueado que su dueño no
+  // puede/quiere arreglar). Llama a una función de Postgres (security
+  // definer, valida is_admin() ella misma) que primero desvincula el
+  // producto de esos pedidos (order_items.product_id queda en null — el
+  // pedido y su historial de compra se conservan, solo se pierde la
+  // referencia al producto puntual) y luego sí lo borra.
+  async forceDeleteAsAdmin(id: string): Promise<{ error: string | null }> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase.rpc('admin_force_delete_product', { p_product_id: id });
+      return { error: error ? error.message : null };
     }
     const products = demoDb.getProducts();
     demoDb.saveProducts(products.filter((p) => p.id !== id));
