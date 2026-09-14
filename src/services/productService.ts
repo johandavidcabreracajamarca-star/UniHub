@@ -184,6 +184,30 @@ export const productService = {
     return this.update(id, { available });
   },
 
+  // El propio dueño puede borrar su producto (política products_delete_own_business,
+  // ya existente en Supabase, no hace falta nada nuevo ahí). Si el producto
+  // ya tiene pedidos asociados, la base de datos rechaza el borrado (para no
+  // perder el historial de esos pedidos) — en ese caso avisamos que lo
+  // desactive en vez de borrarlo.
+  async delete(id: string): Promise<{ error: string | null }> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase.from('products').delete().eq('id', id);
+      if (error) {
+        if (error.code === '23503') {
+          return {
+            error:
+              'No puedes eliminar este producto porque ya tiene pedidos asociados. Puedes desactivarlo en su lugar.',
+          };
+        }
+        return { error: error.message };
+      }
+      return { error: null };
+    }
+    const products = demoDb.getProducts();
+    demoDb.saveProducts(products.filter((p) => p.id !== id));
+    return { error: null };
+  },
+
   // Solo un admin puede suspender/reactivar un producto — la política
   // products_update_admin en Supabase rechaza el cambio para cualquier otro
   // usuario, incluido el propio dueño del emprendimiento.
