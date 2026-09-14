@@ -1,15 +1,20 @@
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard, LogOut, GraduationCap, Mail, ShieldCheck, Shield } from 'lucide-react';
+import { LayoutDashboard, LogOut, GraduationCap, Mail, ShieldCheck, Shield, Rocket } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { useMyBusiness } from '../hooks/useMyBusiness';
 import { Button } from '../components/Button';
 import { demoUniversities, demoFaculties } from '../data/demoData';
 
 export function ProfilePage() {
   const { profile, logout } = useAuth();
+  const { business, loading: loadingBusiness } = useMyBusiness();
   const navigate = useNavigate();
 
   if (!profile) return null;
+
+  const isAdmin = profile.role === 'admin';
+  const hasBusiness = Boolean(business);
 
   const university = demoUniversities.find((u) => u.id === profile.university_id);
   const faculty = demoFaculties.find((f) => f.id === profile.faculty_id);
@@ -42,7 +47,7 @@ export function ProfilePage() {
         <InfoRow icon={<Mail size={16} />} label="Correo institucional" value={profile.email} />
       </div>
 
-            {(profile.role === 'emprendedor' || profile.role === 'admin') && (
+      {!loadingBusiness && (hasBusiness || isAdmin) && (
         <button
           onClick={() => navigate('/dashboard')}
           className="mt-4 flex w-full items-center justify-between rounded-card border border-ink/8 bg-white p-4 shadow-card hover:bg-ink/5 transition-colors"
@@ -54,6 +59,24 @@ export function ProfilePage() {
             Panel del emprendedor
           </span>
           <span className="text-ink/30">›</span>
+        </button>
+      )}
+
+      {!loadingBusiness && !hasBusiness && !isAdmin && (
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="mt-4 flex w-full items-center gap-3 rounded-card p-4 text-left shadow-card transition-opacity hover:opacity-90"
+          style={{ backgroundColor: '#F0D2C0' }}
+        >
+          <span
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white"
+            style={{ backgroundColor: '#B1502B' }}
+          >
+            <Rocket size={19} />
+          </span>
+          <span className="text-sm font-semibold" style={{ color: '#712B13' }}>
+            Crea tu negocio y empieza a vender
+          </span>
         </button>
       )}
 

@@ -49,8 +49,10 @@ function App() {
               </Route>
             </Route>
 
-            {/* Autenticado + rol emprendedor */}
-                        <Route element={<ProtectedRoute requiredRole={['emprendedor', 'admin']} />}>
+            {/* Autenticado: cualquier usuario puede entrar al panel para crear
+                su emprendimiento (ver CreateBusinessForm) o gestionarlo si ya
+                tiene uno */}
+            <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<DashboardLayout />}>
                   <Route index element={<DashboardHome />} />

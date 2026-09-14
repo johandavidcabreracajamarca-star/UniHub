@@ -6,7 +6,7 @@ import { Input, Select } from '../components/Input';
 import { authService } from '../services/authService';
 import { universityService } from '../services/universityService';
 import { useAuth } from '../hooks/useAuth';
-import type { Faculty, University, UserRole } from '../types';
+import type { Faculty, University } from '../types';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TOTAL_STEPS = 3;
@@ -27,7 +27,6 @@ export function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [universityId, setUniversityId] = useState('');
   const [facultyId, setFacultyId] = useState('');
-  const [role, setRole] = useState<UserRole>('comprador');
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -96,7 +95,7 @@ export function Register() {
       password,
       university: selectedUniversity,
       faculty_id: facultyId,
-      role,
+      role: 'comprador',
     });
     setLoading(false);
     if (error) {
@@ -199,7 +198,7 @@ export function Register() {
 
           {step === 3 && (
             <>
-              <p className="text-xs font-medium uppercase tracking-wide text-ink/40">Paso 3 de 3 · Contraseña y rol</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-ink/40">Paso 3 de 3 · Contraseña</p>
 
               <Input
                 label="Contraseña"
@@ -221,30 +220,6 @@ export function Register() {
                   </button>
                 }
               />
-
-              <div>
-                <span className="mb-1.5 block text-sm font-medium text-ink">Quiero usar UniHub para</span>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setRole('comprador')}
-                    className={`rounded-control border px-3 py-2.5 text-sm font-medium transition-colors ${
-                      role === 'comprador' ? 'border-primary bg-primary-light text-primary-dark' : 'border-ink/15 text-ink/60'
-                    }`}
-                  >
-                    Comprar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRole('emprendedor')}
-                    className={`rounded-control border px-3 py-2.5 text-sm font-medium transition-colors ${
-                      role === 'emprendedor' ? 'border-primary bg-primary-light text-primary-dark' : 'border-ink/15 text-ink/60'
-                    }`}
-                  >
-                    Vender
-                  </button>
-                </div>
-              </div>
 
               {error && <p className="text-sm text-red-600">{error}</p>}
 

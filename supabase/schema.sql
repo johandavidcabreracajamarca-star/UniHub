@@ -202,11 +202,15 @@ create policy "profiles_select_authenticated" on profiles
 create policy "profiles_insert_own" on profiles
   for insert with check (auth.uid() = id);
 
--- Un usuario solo puede modificar su propio perfil, y jamás cambiar su propio "id"
--- (el rol se permite editar aquí a nivel de policy; en el MVP se fija en el registro)
+-- Un usuario solo puede modificar su propio perfil, y jamás cambiar su propio
+-- "id" ni su "role" (role solo distingue admin del resto; solo un admin o el
+-- backend puede cambiarlo, nunca el propio usuario desde el cliente)
 create policy "profiles_update_own" on profiles
   for update using (auth.uid() = id)
-  with check (auth.uid() = id);
+  with check (
+    auth.uid() = id
+    and role = (select role from profiles p where p.id = profiles.id)
+  );
 
 -- ---------------- BUSINESSES ----------------
 -- Lectura pública: cualquiera puede explorar emprendimientos
