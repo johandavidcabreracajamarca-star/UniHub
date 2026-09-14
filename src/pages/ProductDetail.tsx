@@ -5,6 +5,7 @@ import type { Product } from '../types';
 import { CATEGORY_LABELS } from '../types';
 import { productService } from '../services/productService';
 import { formatCOP } from '../utils/format';
+import { isProductOnSale, getDiscountedPrice } from '../utils/discount';
 import { ProductImage } from '../components/ProductImage';
 import { VerifiedBadge } from '../components/VerifiedBadge';
 import { StarRating } from '../components/StarRating';
@@ -58,6 +59,8 @@ export function ProductDetail() {
   }
 
   const business = product.business;
+  const onSale = isProductOnSale(product);
+  const finalPrice = onSale ? getDiscountedPrice(product) : product.price;
 
   return (
     <div className="pb-28 md:pb-10">
@@ -83,6 +86,11 @@ export function ProductDetail() {
             Agotado
           </span>
         )}
+        {onSale && (
+          <span className="absolute left-4 top-4 rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white">
+            -{product.discount_percent}% OFF
+          </span>
+        )}
       </div>
 
       <div className="px-4 pt-5 md:px-6 md:max-w-2xl md:mx-auto">
@@ -90,7 +98,14 @@ export function ProductDetail() {
           {CATEGORY_LABELS[product.category]}
         </span>
         <h1 className="mt-1 text-xl font-bold text-ink">{product.name}</h1>
-        <p className="mt-1.5 text-2xl font-bold text-ink">{formatCOP(product.price)}</p>
+        {onSale ? (
+          <div className="mt-1.5 flex items-center gap-2.5">
+            <p className="text-2xl font-bold text-ink">{formatCOP(finalPrice)}</p>
+            <p className="text-sm text-ink/40 line-through">{formatCOP(product.price)}</p>
+          </div>
+        ) : (
+          <p className="mt-1.5 text-2xl font-bold text-ink">{formatCOP(product.price)}</p>
+        )}
 
         <p className="mt-4 text-sm leading-relaxed text-ink/70">{product.description}</p>
 
