@@ -14,6 +14,15 @@ import { RowSkeleton } from '../../components/StateViews';
 import { ProductImage } from '../../components/ProductImage';
 import { processUploadedImage } from '../../utils/imageUpload';
 
+// Convierte una fecha ISO (como la guarda la base de datos) al formato que
+// espera un <input type="datetime-local">, en hora LOCAL del navegador.
+function toDatetimeLocalValue(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 export function ProductForm() {
   const { id } = useParams<{ id: string }>();
   const isEditing = Boolean(id);
@@ -41,6 +50,10 @@ export function ProductForm() {
   const [showUrlField, setShowUrlField] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [discountPercent, setDiscountPercent] = useState('');
+  const [discountStart, setDiscountStart] = useState('');
+  const [discountEnd, setDiscountEnd] = useState('');
+
   useEffect(() => {
     if (!isEditing || !id) return;
     productService.getById(id).then((product) => {
@@ -52,6 +65,13 @@ export function ProductForm() {
         setStock(String(product.stock));
         setAvailable(product.available);
         setImage(product.image ?? '');
+        setDiscountPercent(product.discount_percent ? String(product.discount_percent) : '');
+        setDiscountStart(
+          product.discount_starts_at ? toDatetimeLocalValue(product.discount_starts_at) : ''
+        );
+        setDiscountEnd(
+          product.discount_ends_at ? toDatetimeLocalValue(product.discount_ends_at) : ''
+        );
       }
       setLoadingProduct(false);
     });
@@ -87,6 +107,34 @@ export function ProductForm() {
       return;
     }
 
+    // El descuento es opcional, pero si el vendedor le puso un porcentaje
+    // entonces las dos fechas son obligatorias y la de fin debe ser después
+    // de la de inicio.
+    let discountPercentNum: number | null = null;
+    let discountStartsIso: string | null = null;
+    let discountEndsIso: string | null = null;
+
+    if (discountPercent.trim()) {
+      const pct = Number(discountPercent);
+      if (Number.isNaN(pct) || pct <= 0 || pct > 90) {
+        setError('El descuento debe ser un porcentaje entre 1 y 90.');
+        return;
+      }
+      if (!discountStart || !discountEnd) {
+        setError('Si vas a poner un descuento, elige cuándo empieza y cuándo termina.');
+        return;
+      }
+      const startDate = new Date(discountStart);
+      const endDate = new Date(discountEnd);
+      if (endDate.getTime() <= startDate.getTime()) {
+        setError('La fecha de fin del descuento debe ser posterior a la de inicio.');
+        return;
+      }
+      discountPercentNum = pct;
+      discountStartsIso = startDate.toISOString();
+      discountEndsIso = endDate.toISOString();
+    }
+
     setSaving(true);
     setError(null);
 
@@ -120,6 +168,9 @@ export function ProductForm() {
         stock: stockNum,
         available,
         image: finalImage,
+        discount_percent: discountPercentNum,
+        discount_starts_at: discountStartsIso,
+        discount_ends_at: discountEndsIso,
       });
       setSaving(false);
       if (error) {
@@ -304,6 +355,54 @@ export function ProductForm() {
           />
           Disponible para la venta
         </label>
+
+        {isEditing && (
+          <div className="rounded-card border border-ink/8 bg-surface p-4">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-medium text-ink">Descuento (opcional)</span>
+              {(discountPercent || discountStart || discountEnd) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDiscountPercent('');
+                    setDiscountStart('');
+                    setDiscountEnd('');
+                  }}
+                  className="text-xs font-medium text-ink/50 hover:text-red-600"
+                >
+                  Quitar descuento
+                </button>
+              )}
+            </div>
+            <p className="mt-1 text-xs text-ink/50">
+              Los compradores verán el precio original tachado junto al precio con descuento,
+              solo mientras esté dentro de las fechas que elijas.
+            </p>
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <Input
+                label="Descuento (%)"
+                type="number"
+                min={1}
+                max={90}
+                placeholder="ej. 20"
+                value={discountPercent}
+                onChange={(e) => setDiscountPercent(e.target.value)}
+              />
+              <Input
+                label="Empieza"
+                type="datetime-local"
+                value={discountStart}
+                onChange={(e) => setDiscountStart(e.target.value)}
+              />
+              <Input
+                label="Termina"
+                type="datetime-local"
+                value={discountEnd}
+                onChange={(e) => setDiscountEnd(e.target.value)}
+              />
+            </div>
+          </div>
+        )}
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 
