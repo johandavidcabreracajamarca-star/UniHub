@@ -28,7 +28,7 @@ export function BusinessCard({ business }: { business: Business }) {
       ) : (
         <ImagePlaceholder category={business.category} className="h-20 w-full" iconSize={22} />
       )}
-      <div className="p-2.5">
+      <div className="p-3">
         <div className="flex items-center gap-1 min-w-0">
           <h3 className="text-sm font-semibold text-ink truncate">{business.name}</h3>
           {business.verified && <VerifiedBadge compact />}
