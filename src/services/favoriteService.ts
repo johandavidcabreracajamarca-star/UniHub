@@ -1,5 +1,5 @@
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
-import { demoDb } from '../data/demoData';
+import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
+import { demoDb } from '../data/demoDb';
 import type { Business } from '../types';
 
 export const favoriteService = {
@@ -11,8 +11,8 @@ export const favoriteService = {
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
       if (error || !data) return [];
-      return data
-        .map((row) => (row as unknown as { business: Business | null }).business)
+      return (data as unknown as { business: Business | null }[])
+        .map((row) => row.business)
         .filter((b): b is Business => b !== null);
     }
     return demoDb.getFavoriteBusinesses(userId);
@@ -22,7 +22,7 @@ export const favoriteService = {
     if (isSupabaseConfigured) {
       const { data, error } = await supabase.from('favorites').select('business_id').eq('user_id', userId);
       if (error || !data) return new Set();
-      return new Set(data.map((row) => row.business_id as string));
+      return new Set((data as { business_id: string }[]).map((row) => row.business_id));
     }
     return new Set(demoDb.getFavoriteIds(userId));
   },
