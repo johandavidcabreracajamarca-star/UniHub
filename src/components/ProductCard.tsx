@@ -45,13 +45,13 @@ export function ProductCard({
           </div>
         )}
         {onSale && (
-          <span className="absolute left-2 top-2 rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-semibold text-white">
+          <span className="absolute left-2 top-2 rounded-full bg-accent px-2.5 py-1 text-[11px] font-semibold text-white shadow-card">
             -{product.discount_percent}% OFF
           </span>
         )}
       </div>
 
-      <div className="p-3">
+      <div className="p-3.5">
         <div className="flex items-start justify-between gap-2">
           <h3 className="text-sm font-semibold text-ink line-clamp-1">{product.name}</h3>
         </div>
@@ -70,15 +70,19 @@ export function ProductCard({
           </p>
         )}
 
-        <div className="mt-2 flex items-center justify-between">
+        <div className="mt-2.5 flex items-center justify-between">
           <div className="flex flex-col gap-0.5">
             {onSale ? (
               <div className="flex items-baseline gap-1.5">
-                <span className="text-base font-semibold text-ink">{formatCOP(finalPrice)}</span>
+                <span className="font-serif text-lg font-semibold text-ink">
+                  {formatCOP(finalPrice)}
+                </span>
                 <span className="text-xs text-ink/40 line-through">{formatCOP(product.price)}</span>
               </div>
             ) : (
-              <span className="text-base font-semibold text-ink">{formatCOP(product.price)}</span>
+              <span className="font-serif text-lg font-semibold text-ink">
+                {formatCOP(product.price)}
+              </span>
             )}
             {business && <StarRating rating={business.rating} size={12} />}
           </div>
