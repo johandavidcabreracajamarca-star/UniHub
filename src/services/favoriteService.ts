@@ -5,7 +5,7 @@ import type { Business } from '../types';
 export const favoriteService = {
   async listFavoriteBusinesses(userId: string): Promise<Business[]> {
     if (isSupabaseConfigured) {
-      const { data, error } = await supabase
+      const { data, error } = await supabase!
         .from('favorites')
         .select('business:businesses(*)')
         .eq('user_id', userId)
@@ -20,7 +20,7 @@ export const favoriteService = {
 
   async listFavoriteIds(userId: string): Promise<Set<string>> {
     if (isSupabaseConfigured) {
-      const { data, error } = await supabase.from('favorites').select('business_id').eq('user_id', userId);
+      const { data, error } = await supabase!.from('favorites').select('business_id').eq('user_id', userId);
       if (error || !data) return new Set();
       return new Set((data as { business_id: string }[]).map((row) => row.business_id));
     }
@@ -29,7 +29,7 @@ export const favoriteService = {
 
   async isFavorite(userId: string, businessId: string): Promise<boolean> {
     if (isSupabaseConfigured) {
-      const { data } = await supabase
+      const { data } = await supabase!
         .from('favorites')
         .select('id')
         .eq('user_id', userId)
@@ -42,7 +42,7 @@ export const favoriteService = {
 
   async add(userId: string, businessId: string): Promise<void> {
     if (isSupabaseConfigured) {
-      await supabase.from('favorites').insert({ user_id: userId, business_id: businessId });
+      await supabase!.from('favorites').insert({ user_id: userId, business_id: businessId });
       return;
     }
     demoDb.addFavorite(userId, businessId);
@@ -50,7 +50,7 @@ export const favoriteService = {
 
   async remove(userId: string, businessId: string): Promise<void> {
     if (isSupabaseConfigured) {
-      await supabase.from('favorites').delete().eq('user_id', userId).eq('business_id', businessId);
+      await supabase!.from('favorites').delete().eq('user_id', userId).eq('business_id', businessId);
       return;
     }
     demoDb.removeFavorite(userId, businessId);
