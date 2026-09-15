@@ -45,7 +45,7 @@ export function Explore() {
       <HomeHeader />
 
       <div className="hidden md:block px-6 pt-6">
-        <h1 className="text-2xl font-bold text-ink">Explorar</h1>
+        <h1 className="font-serif text-3xl font-semibold text-ink">Explorar</h1>
         <p className="mt-1 text-sm text-ink/50">Descubre lo que ofrece tu comunidad universitaria.</p>
       </div>
 
@@ -54,8 +54,8 @@ export function Explore() {
       </div>
 
       {businesses.length > 0 && (
-        <section className="mt-6 px-4 md:px-6">
-          <h2 className="mb-3 text-base font-semibold text-ink">Emprendimientos destacados</h2>
+        <section className="mt-7 px-4 md:px-6">
+          <h2 className="mb-3 font-serif text-lg font-semibold text-ink">Emprendimientos destacados</h2>
           <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-none">
             {businesses.map((b) => (
               <BusinessCard key={b.id} business={b} />
@@ -64,9 +64,9 @@ export function Explore() {
         </section>
       )}
 
-      <section className="mt-6 px-4 pb-6 md:px-6">
+      <section className="mt-7 px-4 pb-6 md:px-6">
         <div className="mb-3 flex items-center justify-between gap-2">
-          <h2 className="text-base font-semibold text-ink">Productos destacados</h2>
+          <h2 className="font-serif text-lg font-semibold text-ink">Productos destacados</h2>
           <SortSelect value={sort} onChange={setSort} />
         </div>
 
@@ -83,13 +83,4 @@ export function Explore() {
         )}
 
         {!loading && !error && products.length > 0 && (
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-            {products.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
-        )}
-      </section>
-    </div>
-  );
-}
+          <div className="grid grid-cols-2 gap-3.5
