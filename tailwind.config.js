@@ -22,13 +22,15 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        serif: ['Fraunces', 'ui-serif', 'Georgia', 'serif'],
       },
       boxShadow: {
         card: '0 1px 2px 0 rgba(63, 90, 58, 0.05), 0 1px 3px 0 rgba(63, 90, 58, 0.08)',
         'card-hover': '0 4px 12px 0 rgba(63, 90, 58, 0.10)',
       },
       borderRadius: {
-        card: '16px',
+        card: '24px',
+        'card-lg': '28px',
         control: '12px',
       },
       maxWidth: {
