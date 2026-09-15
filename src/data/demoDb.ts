@@ -19,7 +19,14 @@ const KEYS = {
   orders: 'unihub_demo_orders',
   reviews: 'unihub_demo_reviews',
   notifications: 'unihub_demo_notifications',
+  favorites: 'unihub_demo_favorites',
 };
+
+interface FavoriteRow {
+  user_id: string;
+  business_id: string;
+  created_at: string;
+}
 
 function load<T>(key: string, seed: T[]): T[] {
   const raw = localStorage.getItem(key);
@@ -62,5 +69,33 @@ export const demoDb = {
   },
   saveNotifications(items: Notification[]) {
     save(KEYS.notifications, items);
+  },
+  getFavoritesRaw(): FavoriteRow[] {
+    return load(KEYS.favorites, []);
+  },
+  saveFavoritesRaw(items: FavoriteRow[]) {
+    save(KEYS.favorites, items);
+  },
+  getFavoriteIds(userId: string): string[] {
+    return demoDb
+      .getFavoritesRaw()
+      .filter((f) => f.user_id === userId)
+      .map((f) => f.business_id);
+  },
+  getFavoriteBusinesses(userId: string): Business[] {
+    const ids = demoDb.getFavoriteIds(userId);
+    return demoDb.getBusinesses().filter((b) => ids.includes(b.id));
+  },
+  addFavorite(userId: string, businessId: string) {
+    const rows = demoDb.getFavoritesRaw();
+    if (rows.some((f) => f.user_id === userId && f.business_id === businessId)) return;
+    rows.push({ user_id: userId, business_id: businessId, created_at: new Date().toISOString() });
+    demoDb.saveFavoritesRaw(rows);
+  },
+  removeFavorite(userId: string, businessId: string) {
+    const rows = demoDb
+      .getFavoritesRaw()
+      .filter((f) => !(f.user_id === userId && f.business_id === businessId));
+    demoDb.saveFavoritesRaw(rows);
   },
 };
