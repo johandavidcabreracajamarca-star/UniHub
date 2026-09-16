@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { MessageCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { chatService } from '../services/chatService';
+import { areNotificationsMuted } from '../utils/notificationPrefs';
 
 const POLL_MS = 60000;
 
@@ -13,7 +14,13 @@ export function MessagesIcon() {
 
   useEffect(() => {
     if (!profile) return;
-    const refresh = () => chatService.countUnread(profile.id).then(setUnread);
+    const refresh = () => {
+      if (areNotificationsMuted()) {
+        setUnread(0);
+        return;
+      }
+      chatService.countUnread(profile.id).then(setUnread);
+    };
     refresh();
     const interval = setInterval(refresh, POLL_MS);
     return () => clearInterval(interval);
