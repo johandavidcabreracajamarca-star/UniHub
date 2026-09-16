@@ -9,6 +9,7 @@ import { useToast } from '../../hooks/useToast';
 import { CATEGORY_LABELS } from '../../types';
 import type { ProductCategory } from '../../types';
 import { processUploadedImage } from '../../utils/imageUpload';
+import { containsContactInfo } from '../../utils/contactFilter';
 
 export function CreateBusinessForm({ onCreated }: { onCreated: () => void }) {
   const { profile } = useAuth();
@@ -75,6 +76,13 @@ export function CreateBusinessForm({ onCreated }: { onCreated: () => void }) {
       setError('Completa el nombre y la descripción de tu emprendimiento.');
       return;
     }
+
+    const contactIssue = containsContactInfo(description) || containsContactInfo(name);
+    if (contactIssue) {
+      setError(contactIssue);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -263,6 +271,9 @@ export function CreateBusinessForm({ onCreated }: { onCreated: () => void }) {
           onChange={(e) => setDescription(e.target.value)}
           required
         />
+        <p className="-mt-2 text-xs text-ink/40">
+          No incluyas WhatsApp, redes sociales ni número de teléfono — usa el chat de UniHub para coordinar con los compradores.
+        </p>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 
