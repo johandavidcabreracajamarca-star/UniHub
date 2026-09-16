@@ -168,3 +168,23 @@ export interface Notification {
   read: boolean;
   created_at: string;
 }
+
+export interface Conversation {
+  id: string;
+  business_id: string;
+  buyer_id: string;
+  created_at: string;
+  last_message_at: string;
+  // campos derivados, opcionales para la UI
+  business?: Pick<Business, 'name' | 'logo'>;
+  buyer?: Pick<Profile, 'full_name'>;
+}
+
+export interface Message {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+  read: boolean;
+}
