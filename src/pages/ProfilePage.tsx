@@ -5,7 +5,6 @@ import {
   LogOut,
   Shield,
   Rocket,
-  UserCog,
   Heart,
   Settings,
   ChevronRight,
@@ -46,38 +45,38 @@ export function ProfilePage() {
         </div>
       </div>
 
-      <p className="mb-2 mt-6 px-1 text-xs font-semibold uppercase tracking-wide text-ink/40">
-        Cuenta
-      </p>
-      <div className="flex flex-col divide-y divide-ink/6 rounded-card-lg border border-ink/8 bg-white shadow-card overflow-hidden">
-        {!loadingBusiness && (hasBusiness || isAdmin) && (
-          <MenuRow
-            icon={<LayoutDashboard size={17} />}
-            label="Panel del emprendedor"
-            onClick={() => navigate('/dashboard')}
-          />
-        )}
+      {!loadingBusiness && (hasBusiness || isAdmin) && (
+        <>
+          <p className="mb-2 mt-6 px-1 text-xs font-semibold uppercase tracking-wide text-ink/40">
+            Cuenta
+          </p>
+          <div className="flex flex-col rounded-card-lg border border-ink/8 bg-white shadow-card overflow-hidden">
+            <MenuRow
+              icon={<LayoutDashboard size={17} />}
+              label="Panel del emprendedor"
+              onClick={() => navigate('/dashboard')}
+            />
+          </div>
+        </>
+      )}
 
-        {!loadingBusiness && !hasBusiness && !isAdmin && (
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="flex w-full items-center gap-3 p-4 text-left transition-opacity hover:opacity-90"
-            style={{ backgroundColor: '#F0D2C0' }}
+      {!loadingBusiness && !hasBusiness && !isAdmin && (
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="mt-6 flex w-full items-center gap-3 rounded-card-lg p-4 text-left shadow-card transition-opacity hover:opacity-90"
+          style={{ backgroundColor: '#F0D2C0' }}
+        >
+          <span
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white"
+            style={{ backgroundColor: '#B1502B' }}
           >
-            <span
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white"
-              style={{ backgroundColor: '#B1502B' }}
-            >
-              <Rocket size={18} />
-            </span>
-            <span className="text-sm font-semibold" style={{ color: '#712B13' }}>
-              Crea tu negocio y empieza a vender
-            </span>
-          </button>
-        )}
-
-        <MenuRow icon={<UserCog size={17} />} label="Editar perfil" comingSoon />
-      </div>
+            <Rocket size={18} />
+          </span>
+          <span className="text-sm font-semibold" style={{ color: '#712B13' }}>
+            Crea tu negocio y empieza a vender
+          </span>
+        </button>
+      )}
 
       <p className="mb-2 mt-6 px-1 text-xs font-semibold uppercase tracking-wide text-ink/40">
         Favoritos y ajustes
