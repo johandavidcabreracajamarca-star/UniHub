@@ -14,6 +14,7 @@ import type { ProductCategory, Business } from '../../types';
 import { RowSkeleton, ErrorState } from '../../components/StateViews';
 import { ProductImage } from '../../components/ProductImage';
 import { processUploadedImage } from '../../utils/imageUpload';
+import { containsContactInfo } from '../../utils/contactFilter';
 
 // Convierte una fecha ISO (como la guarda la base de datos) al formato que
 // espera un <input type="datetime-local">, en hora LOCAL del navegador.
@@ -125,6 +126,12 @@ export function ProductForm() {
 
     if (!name.trim() || !description.trim() || Number.isNaN(priceNum) || priceNum < 0 || Number.isNaN(stockNum) || stockNum < 0) {
       setError('Completa todos los campos obligatorios con valores válidos.');
+      return;
+    }
+
+    const contactIssue = containsContactInfo(description) || containsContactInfo(name);
+    if (contactIssue) {
+      setError(contactIssue);
       return;
     }
 
@@ -254,6 +261,9 @@ export function ProductForm() {
           onChange={(e) => setDescription(e.target.value)}
           required
         />
+        <p className="-mt-2 text-xs text-ink/40">
+          No incluyas WhatsApp, redes sociales ni número de teléfono — usa el chat de UniHub para coordinar con los compradores.
+        </p>
 
         <div>
           <span className="mb-1.5 block text-sm font-medium text-ink">Foto del producto</span>
