@@ -15,6 +15,8 @@ import { BusinessProfile } from './pages/BusinessProfile';
 import { Orders } from './pages/Orders';
 import { ProfilePage } from './pages/ProfilePage';
 import { FavoritosPage } from './pages/FavoritosPage';
+import { ConversationsPage } from './pages/ConversationsPage';
+import { ChatPage } from './pages/ChatPage';
 
 import { DashboardLayout } from './pages/dashboard/DashboardLayout';
 import { DashboardHome } from './pages/dashboard/DashboardHome';
@@ -48,6 +50,8 @@ function App() {
                 <Route path="/orders" element={<Orders />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/favorites" element={<FavoritosPage />} />
+                <Route path="/messages" element={<ConversationsPage />} />
+                <Route path="/messages/:id" element={<ChatPage />} />
               </Route>
             </Route>
 
