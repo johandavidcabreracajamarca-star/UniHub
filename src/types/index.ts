@@ -89,6 +89,12 @@ export interface Business {
   // cercanía. Null/undefined si el dueño nunca la configuró.
   latitude?: number | null;
   longitude?: number | null;
+  // disponibilidad del emprendedor: lo prende/apaga él mismo desde su panel
+  // (como el "en línea" de WhatsApp Business), más una nota corta de
+  // contexto ("Suelo responder entre semana en las tardes"). Opcional para
+  // no romper los datos de demo/negocios existentes.
+  available_now?: boolean;
+  availability_note?: string | null;
   // campos derivados (joins), opcionales para la UI
   university_name?: string;
   faculty_name?: string;
