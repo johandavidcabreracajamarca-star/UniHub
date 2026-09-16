@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { Compass, Search, Receipt, User, ShoppingBag } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { NotificationBell } from './NotificationBell';
+import { MessagesIcon } from './MessagesIcon';
 
 const items = [
   { to: '/explore', label: 'Explorar', icon: Compass },
@@ -44,6 +45,7 @@ export function TopNav() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <MessagesIcon />
           <NotificationBell />
           <button
             onClick={() => navigate('/profile')}
