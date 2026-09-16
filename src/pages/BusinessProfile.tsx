@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, MapPin } from 'lucide-react';
+import { ArrowLeft, MapPin, Circle } from 'lucide-react';
 import type { Business, Product, Review } from '../types';
 import { CATEGORY_LABELS } from '../types';
 import { businessService } from '../services/businessService';
@@ -94,6 +94,23 @@ export function BusinessProfile() {
         </p>
 
         <p className="mt-4 text-sm leading-relaxed text-ink/70">{business.description}</p>
+
+        <div className="mt-4 flex items-start gap-2.5 rounded-card border border-ink/8 bg-white p-3.5 shadow-card">
+          <Circle
+            size={9}
+            className={`mt-1 shrink-0 ${
+              business.available_now ? 'fill-primary text-primary' : 'fill-ink/20 text-ink/20'
+            }`}
+          />
+          <div>
+            <p className="text-sm font-medium text-ink">
+              {business.available_now ? 'Disponible ahora' : 'No disponible en este momento'}
+            </p>
+            {business.availability_note?.trim() && (
+              <p className="mt-0.5 text-xs text-ink/50">{business.availability_note}</p>
+            )}
+          </div>
+        </div>
 
         <section className="mt-7">
           <h2 className="mb-3 text-base font-semibold text-ink">
