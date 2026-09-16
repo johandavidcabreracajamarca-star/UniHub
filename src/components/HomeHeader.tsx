@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, ShoppingBag, User } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { NotificationBell } from './NotificationBell';
+import { MessagesIcon } from './MessagesIcon';
 
 export function HomeHeader() {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ export function HomeHeader() {
           <span className="text-lg font-bold text-ink">UniHub</span>
         </div>
         <div className="flex items-center gap-1">
+          <MessagesIcon />
           <NotificationBell />
           <button
             onClick={() => navigate('/profile')}
