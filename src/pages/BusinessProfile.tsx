@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, MapPin, Circle } from 'lucide-react';
+import { ArrowLeft, MapPin, Circle, MessageCircle } from 'lucide-react';
 import type { Business, Product, Review } from '../types';
 import { CATEGORY_LABELS } from '../types';
 import { businessService } from '../services/businessService';
 import { productService } from '../services/productService';
 import { reviewService } from '../services/reviewService';
+import { chatService } from '../services/chatService';
+import { useAuth } from '../hooks/useAuth';
 import { ImagePlaceholder } from '../components/ImagePlaceholder';
 import { VerifiedBadge } from '../components/VerifiedBadge';
 import { StarRating } from '../components/StarRating';
@@ -16,12 +18,14 @@ import { formatDate } from '../utils/format';
 export function BusinessProfile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { profile } = useAuth();
 
   const [business, setBusiness] = useState<Business | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [askingLoading, setAskingLoading] = useState(false);
 
   const load = async () => {
     if (!id) return;
@@ -48,6 +52,15 @@ export function BusinessProfile() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  const handleAsk = async () => {
+    if (!business || !profile || askingLoading) return;
+    setAskingLoading(true);
+    const { conversation, error } = await chatService.getOrCreate(profile.id, business.id);
+    setAskingLoading(false);
+    if (error || !conversation) return;
+    navigate(`/messages/${conversation.id}`);
+  };
+
   if (loading) {
     return (
       <div className="px-4 pt-4 md:px-6 md:pt-6">
@@ -59,6 +72,8 @@ export function BusinessProfile() {
   if (error || !business) {
     return <ErrorState onRetry={load} />;
   }
+
+  const isOwnBusiness = profile?.id === business.owner_id;
 
   return (
     <div className="pb-10">
@@ -74,8 +89,21 @@ export function BusinessProfile() {
       </div>
 
       <div className="relative px-4 md:px-6 md:max-w-3xl md:mx-auto">
-        <div className="-mt-8 flex h-16 w-16 items-center justify-center rounded-2xl border-4 border-surface bg-white shadow-card">
-          <ImagePlaceholder category={business.category} className="h-full w-full rounded-xl" iconSize={22} />
+        <div className="-mt-8 flex items-end justify-between gap-3">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-4 border-surface bg-white shadow-card">
+            <ImagePlaceholder category={business.category} className="h-full w-full rounded-xl" iconSize={22} />
+          </div>
+
+          {!isOwnBusiness && (
+            <button
+              onClick={handleAsk}
+              disabled={askingLoading}
+              className="mb-1 flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white shadow-card transition-transform active:scale-95 disabled:opacity-60"
+            >
+              <MessageCircle size={15} />
+              Preguntar
+            </button>
+          )}
         </div>
 
         <div className="mt-3 flex items-center gap-2">
