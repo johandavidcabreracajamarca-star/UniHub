@@ -17,6 +17,8 @@ import { ProfilePage } from './pages/ProfilePage';
 import { FavoritosPage } from './pages/FavoritosPage';
 import { ConversationsPage } from './pages/ConversationsPage';
 import { ChatPage } from './pages/ChatPage';
+import { SettingsPage } from './pages/SettingsPage';
+import { HelpPage } from './pages/HelpPage';
 
 import { DashboardLayout } from './pages/dashboard/DashboardLayout';
 import { DashboardHome } from './pages/dashboard/DashboardHome';
@@ -52,6 +54,8 @@ function App() {
                 <Route path="/favorites" element={<FavoritosPage />} />
                 <Route path="/messages" element={<ConversationsPage />} />
                 <Route path="/messages/:id" element={<ChatPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/help" element={<HelpPage />} />
               </Route>
             </Route>
 
