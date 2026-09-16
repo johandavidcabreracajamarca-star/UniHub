@@ -5,6 +5,7 @@ import { notificationService } from '../services/notificationService';
 import { EmptyState } from './StateViews';
 import type { Notification } from '../types';
 import { formatDateTime } from '../utils/format';
+import { areNotificationsMuted } from '../utils/notificationPrefs';
 
 const POLL_MS = 60000;
 
@@ -18,6 +19,10 @@ export function NotificationBell() {
 
   const refreshUnread = async () => {
     if (!profile) return;
+    if (areNotificationsMuted()) {
+      setUnread(0);
+      return;
+    }
     setUnread(await notificationService.countUnread(profile.id));
   };
 
