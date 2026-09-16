@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart } from 'lucide-react';
+import { Heart, Circle } from 'lucide-react';
 import type { Business } from '../types';
 import { ImagePlaceholder } from './ImagePlaceholder';
 import { VerifiedBadge } from './VerifiedBadge';
@@ -82,7 +82,15 @@ export function BusinessCard({ business }: { business: Business }) {
           <h3 className="text-sm font-semibold text-ink truncate">{business.name}</h3>
           {business.verified && <VerifiedBadge compact />}
         </div>
-        <p className="text-xs text-ink/50 truncate">{CATEGORY_LABELS[business.category]}</p>
+        <div className="flex items-center gap-1 min-w-0">
+          <p className="text-xs text-ink/50 truncate">{CATEGORY_LABELS[business.category]}</p>
+          {business.available_now && (
+            <span className="flex shrink-0 items-center gap-0.5 text-[10px] font-medium text-primary">
+              <Circle size={6} className="fill-primary text-primary" />
+              activo
+            </span>
+          )}
+        </div>
         <div className="mt-1.5">
           <StarRating rating={business.rating} size={12} reviewCount={business.review_count} />
         </div>
