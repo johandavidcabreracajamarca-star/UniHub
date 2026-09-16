@@ -14,6 +14,7 @@ import { ProductDetail } from './pages/ProductDetail';
 import { BusinessProfile } from './pages/BusinessProfile';
 import { Orders } from './pages/Orders';
 import { ProfilePage } from './pages/ProfilePage';
+import { FavoritosPage } from './pages/FavoritosPage';
 
 import { DashboardLayout } from './pages/dashboard/DashboardLayout';
 import { DashboardHome } from './pages/dashboard/DashboardHome';
@@ -46,6 +47,7 @@ function App() {
                 <Route path="/business/:id" element={<BusinessProfile />} />
                 <Route path="/orders" element={<Orders />} />
                 <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/favorites" element={<FavoritosPage />} />
               </Route>
             </Route>
 
