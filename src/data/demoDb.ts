@@ -5,7 +5,15 @@
 // que el MVP sea completamente funcional sin backend real.
 // ============================================================================
 
-import type { Business, Product, Order, Review, Notification } from '../types';
+import type {
+  Business,
+  Product,
+  Order,
+  Review,
+  Notification,
+  Conversation,
+  Message,
+} from '../types';
 import {
   demoBusinesses,
   demoProducts,
@@ -20,6 +28,8 @@ const KEYS = {
   reviews: 'unihub_demo_reviews',
   notifications: 'unihub_demo_notifications',
   favorites: 'unihub_demo_favorites',
+  conversations: 'unihub_demo_conversations',
+  messages: 'unihub_demo_messages',
 };
 
 interface FavoriteRow {
@@ -97,5 +107,17 @@ export const demoDb = {
       .getFavoritesRaw()
       .filter((f) => !(f.user_id === userId && f.business_id === businessId));
     demoDb.saveFavoritesRaw(rows);
+  },
+  getConversations(): Conversation[] {
+    return load(KEYS.conversations, []);
+  },
+  saveConversations(items: Conversation[]) {
+    save(KEYS.conversations, items);
+  },
+  getMessages(): Message[] {
+    return load(KEYS.messages, []);
+  },
+  saveMessages(items: Message[]) {
+    save(KEYS.messages, items);
   },
 };
