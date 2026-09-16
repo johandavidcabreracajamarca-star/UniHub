@@ -160,6 +160,33 @@ export const businessService = {
     return { error: null };
   },
 
+  // El propio dueño prende/apaga "disponible ahora" y edita su nota de
+  // horario cuando quiera — igual que logo/ubicación, cubierto por
+  // businesses_update_own sin política nueva.
+  async updateAvailability(
+    id: string,
+    availableNow: boolean,
+    availabilityNote: string | null
+  ): Promise<{ error: string | null }> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('businesses')
+        .update({ available_now: availableNow, availability_note: availabilityNote })
+        .eq('id', id);
+      return { error: error ? error.message : null };
+    }
+    const businesses = demoDb.getBusinesses();
+    const idx = businesses.findIndex((b) => b.id === id);
+    if (idx === -1) return { error: 'Emprendimiento no encontrado.' };
+    businesses[idx] = {
+      ...businesses[idx],
+      available_now: availableNow,
+      availability_note: availabilityNote,
+    };
+    demoDb.saveBusinesses(businesses);
+    return { error: null };
+  },
+
   // Las dos funciones siguientes solo las puede ejecutar con éxito un admin:
   // la política de seguridad en Supabase (businesses_update_admin) rechaza
   // el cambio si quien lo intenta no tiene role = 'admin' en su perfil.
