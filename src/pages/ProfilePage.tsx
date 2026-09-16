@@ -83,7 +83,7 @@ export function ProfilePage() {
         Favoritos y ajustes
       </p>
       <div className="flex flex-col divide-y divide-ink/6 rounded-card-lg border border-ink/8 bg-white shadow-card overflow-hidden">
-        <MenuRow icon={<Heart size={17} />} label="Favoritos" comingSoon />
+        <MenuRow icon={<Heart size={17} />} label="Favoritos" onClick={() => navigate('/favorites')} />
         <MenuRow icon={<Settings size={17} />} label="Ajustes" comingSoon />
       </div>
 
