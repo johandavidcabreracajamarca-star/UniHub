@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
-import { Package, ClipboardList, DollarSign, Star, MapPin, Camera, Loader2 } from 'lucide-react';
+import { Package, ClipboardList, DollarSign, Star, MapPin, Camera, Loader2, Circle } from 'lucide-react';
 import { useMyBusiness } from '../../hooks/useMyBusiness';
 import { CreateBusinessForm } from './CreateBusinessForm';
 import { productService } from '../../services/productService';
@@ -27,6 +27,48 @@ export function DashboardHome() {
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoError, setLogoError] = useState<string | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
+
+  const [availabilityNote, setAvailabilityNote] = useState('');
+  const [savingAvailability, setSavingAvailability] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setAvailabilityNote(business?.availability_note ?? '');
+  }, [business?.id, business?.availability_note]);
+
+  const handleToggleAvailable = async () => {
+    if (!business) return;
+    setSavingAvailability(true);
+    setAvailabilityError(null);
+    const { error } = await businessService.updateAvailability(
+      business.id,
+      !business.available_now,
+      business.availability_note ?? null
+    );
+    setSavingAvailability(false);
+    if (error) {
+      setAvailabilityError(error);
+      return;
+    }
+    refresh();
+  };
+
+  const handleSaveAvailabilityNote = async () => {
+    if (!business) return;
+    setSavingAvailability(true);
+    setAvailabilityError(null);
+    const { error } = await businessService.updateAvailability(
+      business.id,
+      Boolean(business.available_now),
+      availabilityNote.trim() || null
+    );
+    setSavingAvailability(false);
+    if (error) {
+      setAvailabilityError(error);
+      return;
+    }
+    refresh();
+  };
 
   const handleLogoSelect = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -169,6 +211,67 @@ export function DashboardHome() {
           {business.logo?.trim() ? 'Cambiar logo' : 'Agregar logo'}
         </button>
         {logoError && <p className="mt-1 text-xs text-red-600">{logoError}</p>}
+      </div>
+
+      <div className="mt-4 rounded-card border border-ink/8 bg-white p-3.5 shadow-card">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <Circle
+              size={9}
+              className={business.available_now ? 'fill-primary text-primary' : 'fill-ink/20 text-ink/20'}
+            />
+            <div>
+              <p className="text-sm font-medium text-ink">
+                {business.available_now ? 'Disponible ahora' : 'No disponible ahora'}
+              </p>
+              <p className="mt-0.5 text-xs text-ink/50">
+                Los compradores ven esto antes de escribirte.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={Boolean(business.available_now)}
+            onClick={handleToggleAvailable}
+            disabled={savingAvailability}
+            className={`relative h-7 w-12 shrink-0 rounded-full transition-colors disabled:opacity-60 ${
+              business.available_now ? 'bg-primary' : 'bg-ink/15'
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-card transition-transform ${
+                business.available_now ? 'translate-x-5' : 'translate-x-0.5'
+              }`}
+            />
+          </button>
+        </div>
+
+        <div className="mt-3">
+          <textarea
+            value={availabilityNote}
+            onChange={(e) => setAvailabilityNote(e.target.value)}
+            placeholder="p. ej. Suelo responder entre semana en las tardes"
+            rows={2}
+            maxLength={120}
+            className="w-full rounded-control border border-ink/15 bg-surface p-2.5 text-sm text-ink placeholder:text-ink/35 focus:border-primary focus:outline-none"
+          />
+          <div className="mt-1.5 flex items-center justify-between">
+            <span className="text-[11px] text-ink/35">{availabilityNote.length}/120</span>
+            {availabilityNote !== (business.availability_note ?? '') && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                loading={savingAvailability}
+                onClick={handleSaveAvailabilityNote}
+              >
+                Guardar nota
+              </Button>
+            )}
+          </div>
+        </div>
+        {availabilityError && <p className="mt-2 text-xs text-red-600">{availabilityError}</p>}
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3">
