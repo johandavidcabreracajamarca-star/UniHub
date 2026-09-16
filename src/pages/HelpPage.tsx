@@ -80,6 +80,7 @@ export function HelpPage() {
         ¿Necesitas más ayuda?
       </p>
       
+              
         href="mailto:johandavidcabreracajamarca@gmail.com?subject=Ayuda%20con%20UniHub"
         className="flex items-center gap-3 rounded-card-lg border border-ink/8 bg-white p-4 shadow-card hover:bg-ink/5 transition-colors"
       >
