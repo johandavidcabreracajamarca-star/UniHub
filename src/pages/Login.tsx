@@ -15,19 +15,37 @@ export function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [unconfirmed, setUnconfirmed] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendMsg, setResendMsg] = useState<string | null>(null);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+    setUnconfirmed(false);
+    setResendMsg(null);
     setLoading(true);
-    const { error } = await authService.login(email, password);
+    const { error, unconfirmed: notConfirmed } = await authService.login(email, password);
     setLoading(false);
     if (error) {
       setError(error);
+      setUnconfirmed(notConfirmed);
       return;
     }
     await refresh();
     navigate('/explore');
+  };
+
+  const handleResend = async () => {
+    setResending(true);
+    setResendMsg(null);
+    const { error } = await authService.resendConfirmation(email);
+    setResending(false);
+    setResendMsg(
+      error
+        ? 'No pudimos reenviar el correo. Intenta de nuevo en un minuto.'
+        : 'Listo, te enviamos otro correo. Revisa también spam.',
+    );
   };
 
   return (
@@ -77,6 +95,20 @@ export function Login() {
           />
 
           {error && <p className="text-sm text-red-600">{error}</p>}
+
+          {unconfirmed && (
+            <div className="flex flex-col items-start gap-1">
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resending}
+                className="text-sm font-medium text-primary hover:underline disabled:opacity-50"
+              >
+                {resending ? 'Enviando...' : 'Reenviar correo de confirmación'}
+              </button>
+              {resendMsg && <p className="text-xs text-ink/60">{resendMsg}</p>}
+            </div>
+          )}
 
           <Link to="/forgot-password" className="self-end text-sm font-medium text-primary hover:underline">
             ¿Olvidaste tu contraseña?
