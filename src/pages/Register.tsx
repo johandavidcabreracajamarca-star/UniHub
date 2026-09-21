@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Eye, EyeOff, Check } from 'lucide-react';
+import { ShoppingBag, Eye, EyeOff, Check, MailCheck } from 'lucide-react';
 import { Button } from '../components/Button';
 import { Input, Select } from '../components/Input';
 import { authService } from '../services/authService';
@@ -30,6 +30,19 @@ export function Register() {
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Cuando la cuenta se crea pero falta confirmar el correo, guardamos a qué
+  // correo se envió el enlace para mostrar la pantalla "Revisa tu correo".
+  const [sentTo, setSentTo] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
+  const [resendMsg, setResendMsg] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
 
   useEffect(() => {
     universityService.listUniversities().then((list) => {
@@ -89,7 +102,7 @@ export function Register() {
     }
 
     setLoading(true);
-    const { error } = await authService.register({
+    const { error, needsConfirmation } = await authService.register({
       full_name: fullName,
       email,
       password,
@@ -102,9 +115,75 @@ export function Register() {
       setError(error);
       return;
     }
+
+    if (needsConfirmation) {
+      // No hay sesión todavía: la persona debe abrir el enlace del correo.
+      setSentTo(email);
+      setCooldown(60);
+      return;
+    }
+
     await refresh();
     navigate('/explore');
   };
+
+  const handleResend = async () => {
+    if (!sentTo || cooldown > 0) return;
+    setResending(true);
+    setResendMsg(null);
+    const { error } = await authService.resendConfirmation(sentTo);
+    setResending(false);
+    if (error) {
+      setResendMsg('No pudimos reenviar el correo. Intenta de nuevo en un minuto.');
+      return;
+    }
+    setResendMsg('Listo, te enviamos otro correo.');
+    setCooldown(60);
+  };
+
+  if (sentTo) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-surface px-6 py-12">
+        <div className="w-full max-w-sm text-center">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-primary-light text-primary">
+            <MailCheck size={30} />
+          </div>
+          <h1 className="text-xl font-bold text-ink">Revisa tu correo</h1>
+          <p className="mt-2 text-sm text-ink/60">
+            Te enviamos un enlace de confirmación a <strong className="text-ink">{sentTo}</strong>. Ábrelo para activar tu cuenta.
+          </p>
+
+          <div className="mt-5 rounded-control bg-secondary-light px-4 py-3 text-left text-xs text-secondary">
+            <p className="font-semibold">¿No lo ves?</p>
+            <p className="mt-1">
+              Puede tardar un par de minutos. Revisa también la carpeta de <strong>spam o no deseados</strong>. Si lo encuentras allí, márcalo como "No es spam".
+            </p>
+          </div>
+
+          {resendMsg && <p className="mt-4 text-sm text-ink/60">{resendMsg}</p>}
+
+          <div className="mt-5 flex flex-col gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              fullWidth
+              loading={resending}
+              disabled={cooldown > 0}
+              onClick={handleResend}
+            >
+              {cooldown > 0 ? `Reenviar correo (${cooldown}s)` : 'Reenviar correo'}
+            </Button>
+            <Link to="/login">
+              <Button type="button" size="lg" fullWidth>
+                Ya lo confirmé, iniciar sesión
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-surface px-6 py-12">
