@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Camera, Link2, X, Loader2 } from 'lucide-react';
+import { ArrowLeft, Camera, Link2, X, Loader2, Trash2, PlusCircle } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { Input, Select, Textarea } from '../../components/Input';
 import { productService } from '../../services/productService';
+import { productVariantService } from '../../services/productVariantService';
 import { storageService } from '../../services/storageService';
 import { businessService } from '../../services/businessService';
 import { useMyBusiness } from '../../hooks/useMyBusiness';
@@ -15,6 +16,20 @@ import { RowSkeleton, ErrorState } from '../../components/StateViews';
 import { ProductImage } from '../../components/ProductImage';
 import { processUploadedImage } from '../../utils/imageUpload';
 import { containsContactInfo } from '../../utils/contactFilter';
+
+// Una fila del formulario de variantes. Los precios/stock se manejan como
+// texto (igual que el resto del formulario) para poder validarlos todos
+// juntos al enviar, en vez de campo por campo.
+interface VariantRow {
+  key: string;
+  name: string;
+  price: string;
+  stock: string;
+}
+
+function emptyVariantRow(): VariantRow {
+  return { key: `v-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, name: '', price: '', stock: '' };
+}
 
 // Convierte una fecha ISO (como la guarda la base de datos) al formato que
 // espera un <input type="datetime-local">, en hora LOCAL del navegador.
@@ -76,6 +91,12 @@ export function ProductForm() {
   const [discountStart, setDiscountStart] = useState('');
   const [discountEnd, setDiscountEnd] = useState('');
 
+  // Variantes (ej. sabores, tallas), cada una con su propio precio y stock.
+  // Cuando el interruptor está apagado, el producto se maneja como antes
+  // con un solo precio/stock.
+  const [useVariants, setUseVariants] = useState(false);
+  const [variantRows, setVariantRows] = useState<VariantRow[]>([]);
+
   useEffect(() => {
     if (!isEditing || !id) return;
     productService.getById(id).then((product) => {
@@ -94,10 +115,26 @@ export function ProductForm() {
         setDiscountEnd(
           product.discount_ends_at ? toDatetimeLocalValue(product.discount_ends_at) : ''
         );
+        if (product.variants && product.variants.length > 0) {
+          setUseVariants(true);
+          setVariantRows(
+            product.variants.map((v) => ({
+              key: v.id,
+              name: v.name,
+              price: String(v.price),
+              stock: String(v.stock),
+            }))
+          );
+        }
       }
       setLoadingProduct(false);
     });
   }, [id, isEditing]);
+
+  const addVariantRow = () => setVariantRows((rows) => [...rows, emptyVariantRow()]);
+  const removeVariantRow = (key: string) => setVariantRows((rows) => rows.filter((r) => r.key !== key));
+  const updateVariantRow = (key: string, changes: Partial<VariantRow>) =>
+    setVariantRows((rows) => rows.map((r) => (r.key === key ? { ...r, ...changes } : r)));
 
   const handleFileSelect = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -121,10 +158,44 @@ export function ProductForm() {
     e.preventDefault();
     if (!business) return;
 
-    const priceNum = Number(price);
-    const stockNum = Number(stock);
+    // Con variantes, el precio/stock del producto en sí no se piden en el
+    // formulario: se calculan a partir de las variantes (el menor precio y
+    // la suma de stock) solo para que el resto de la app (ordenar por
+    // precio, etc.) tenga algo razonable que mostrar.
+    let priceNum: number;
+    let stockNum: number;
+    let parsedVariants: { name: string; price: number; stock: number }[] = [];
 
-    if (!name.trim() || !description.trim() || Number.isNaN(priceNum) || priceNum < 0 || Number.isNaN(stockNum) || stockNum < 0) {
+    if (useVariants) {
+      if (variantRows.length === 0) {
+        setError('Agrega al menos una variante, o desactiva "Este producto tiene variantes".');
+        return;
+      }
+      for (const row of variantRows) {
+        const p = Number(row.price);
+        const s = Number(row.stock);
+        if (!row.name.trim() || Number.isNaN(p) || p < 0 || Number.isNaN(s) || s < 0) {
+          setError('Revisa el nombre, precio y stock de cada variante.');
+          return;
+        }
+      }
+      parsedVariants = variantRows.map((row) => ({
+        name: row.name.trim(),
+        price: Number(row.price),
+        stock: Number(row.stock),
+      }));
+      priceNum = Math.min(...parsedVariants.map((v) => v.price));
+      stockNum = parsedVariants.reduce((sum, v) => sum + v.stock, 0);
+    } else {
+      priceNum = Number(price);
+      stockNum = Number(stock);
+      if (!name.trim() || !description.trim() || Number.isNaN(priceNum) || priceNum < 0 || Number.isNaN(stockNum) || stockNum < 0) {
+        setError('Completa todos los campos obligatorios con valores válidos.');
+        return;
+      }
+    }
+
+    if (!name.trim() || !description.trim()) {
       setError('Completa todos los campos obligatorios con valores válidos.');
       return;
     }
@@ -200,14 +271,25 @@ export function ProductForm() {
         discount_starts_at: discountStartsIso,
         discount_ends_at: discountEndsIso,
       });
-      setSaving(false);
       if (error) {
+        setSaving(false);
         setError(error);
+        return;
+      }
+      // Reemplaza las variantes por la lista actual (vacía si se desactivó
+      // el interruptor, para borrar las que hubiera antes).
+      const { error: variantsError } = await productVariantService.replaceForProduct(
+        id,
+        useVariants ? parsedVariants : []
+      );
+      setSaving(false);
+      if (variantsError) {
+        setError(variantsError);
         return;
       }
       showToast('Producto actualizado con éxito');
     } else {
-      const { error } = await productService.create({
+      const { product: created, error } = await productService.create({
         business_id: business.id,
         name,
         description,
@@ -217,10 +299,23 @@ export function ProductForm() {
         available,
         image: finalImage,
       });
-      setSaving(false);
-      if (error) {
-        setError(error);
+      if (error || !created) {
+        setSaving(false);
+        setError(error ?? 'No se pudo crear el producto.');
         return;
+      }
+      if (useVariants) {
+        const { error: variantsError } = await productVariantService.replaceForProduct(
+          created.id,
+          parsedVariants
+        );
+        setSaving(false);
+        if (variantsError) {
+          setError(variantsError);
+          return;
+        }
+      } else {
+        setSaving(false);
       }
       showToast('Producto creado con éxito');
     }
@@ -359,24 +454,86 @@ export function ProductForm() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Input
-            label="Precio (COP)"
-            type="number"
-            min={0}
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            required
+        <label className="flex items-start gap-2.5 rounded-card border border-ink/8 bg-surface p-3.5 text-sm font-medium text-ink">
+          <input
+            type="checkbox"
+            className="mt-0.5 h-4 w-4 rounded border-ink/25 text-primary focus:ring-primary/30"
+            checked={useVariants}
+            onChange={(e) => {
+              setUseVariants(e.target.checked);
+              if (e.target.checked && variantRows.length === 0) {
+                setVariantRows([emptyVariantRow()]);
+              }
+            }}
           />
-          <Input
-            label="Stock"
-            type="number"
-            min={0}
-            value={stock}
-            onChange={(e) => setStock(e.target.value)}
-            required
-          />
-        </div>
+          <span>
+            Este producto tiene variantes (ej. sabores, tallas)
+            <span className="mt-0.5 block text-xs font-normal text-ink/50">
+              Cada variante tiene su propio precio y stock. Úsalo en vez de crear un producto por
+              cada sabor o talla — así el comprador elige la opción al momento de comprar.
+            </span>
+          </span>
+        </label>
+
+        {useVariants ? (
+          <div className="flex flex-col gap-3">
+            {variantRows.map((row) => (
+              <div key={row.key} className="flex items-end gap-2">
+                <Input
+                  label="Nombre"
+                  placeholder="ej. Chocolate"
+                  value={row.name}
+                  onChange={(e) => updateVariantRow(row.key, { name: e.target.value })}
+                />
+                <Input
+                  label="Precio (COP)"
+                  type="number"
+                  min={0}
+                  value={row.price}
+                  onChange={(e) => updateVariantRow(row.key, { price: e.target.value })}
+                />
+                <Input
+                  label="Stock"
+                  type="number"
+                  min={0}
+                  value={row.stock}
+                  onChange={(e) => updateVariantRow(row.key, { stock: e.target.value })}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeVariantRow(row.key)}
+                  disabled={variantRows.length === 1}
+                  className="mb-1.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-control text-ink/40 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-30"
+                  aria-label="Quitar variante"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))}
+            <Button type="button" variant="outline" size="sm" icon={<PlusCircle size={14} />} onClick={addVariantRow}>
+              Agregar variante
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Precio (COP)"
+              type="number"
+              min={0}
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              required
+            />
+            <Input
+              label="Stock"
+              type="number"
+              min={0}
+              value={stock}
+              onChange={(e) => setStock(e.target.value)}
+              required
+            />
+          </div>
+        )}
 
         <Select label="Categoría" value={category} onChange={(e) => setCategory(e.target.value as ProductCategory)}>
           {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
