@@ -4,6 +4,7 @@ import type { Product } from '../types';
 import { formatCOP } from '../utils/format';
 import { formatDistance } from '../utils/geo';
 import { isProductOnSale, getDiscountedPrice } from '../utils/discount';
+import { getVariantPriceRange, isProductSoldOut } from '../utils/variants';
 import { ProductImage } from './ProductImage';
 import { VerifiedBadge } from './VerifiedBadge';
 
@@ -22,6 +23,8 @@ export function ProductCard({
   const onSale = isProductOnSale(product);
   const finalPrice = onSale ? getDiscountedPrice(product) : product.price;
   const availableNow = business?.available_now;
+  const variantRange = getVariantPriceRange(product);
+  const soldOut = isProductSoldOut(product);
 
   return (
     <button
@@ -37,12 +40,12 @@ export function ProductCard({
           name={product.name}
           seedKey={product.id}
         />
-        {!product.available && (
+        {soldOut && (
           <div className="absolute inset-0 flex items-center justify-center bg-ink/50">
             <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-ink">Agotado</span>
           </div>
         )}
-        {onSale && (
+        {!soldOut && onSale && !variantRange && (
           <span className="absolute left-0 top-3 rounded-r-xl bg-accent py-1 pl-2.5 pr-3 text-xs font-bold text-white shadow-card">
             -{product.discount_percent}%
           </span>
@@ -69,10 +72,22 @@ export function ProductCard({
 
         <div className="mt-2 flex items-end justify-between">
           <div className="flex flex-col">
-            {onSale && (
-              <span className="text-[11px] leading-none text-ink/40 line-through">{formatCOP(product.price)}</span>
+            {variantRange ? (
+              <span className="text-base font-bold text-ink">
+                {variantRange.min === variantRange.max
+                  ? formatCOP(variantRange.min)
+                  : `Desde ${formatCOP(variantRange.min)}`}
+              </span>
+            ) : (
+              <>
+                {onSale && (
+                  <span className="text-[11px] leading-none text-ink/40 line-through">
+                    {formatCOP(product.price)}
+                  </span>
+                )}
+                <span className="text-base font-bold text-ink">{formatCOP(finalPrice)}</span>
+              </>
             )}
-            <span className="text-base font-bold text-ink">{formatCOP(finalPrice)}</span>
           </div>
           <span
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-white transition-all duration-200 group-hover:scale-110 group-active:scale-95"
