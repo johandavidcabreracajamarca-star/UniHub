@@ -49,13 +49,13 @@ export function Explore() {
         <p className="mt-1 text-sm text-ink/50">Descubre lo que ofrece tu comunidad universitaria.</p>
       </div>
 
-      <div className="mt-3 md:mt-5">
+      <div className="mt-5 md:mt-5">
         <CategoryPills selected={category} onSelect={setCategory} />
       </div>
 
       {businesses.length > 0 && (
         <section className="mt-7 px-4 md:px-6">
-          <h2 className="mb-3 font-serif text-lg font-semibold text-ink">Emprendimientos destacados</h2>
+          <h2 className="mb-3 text-lg font-bold tracking-tight text-ink">Emprendimientos destacados</h2>
           <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-none">
             {businesses.map((b) => (
               <BusinessCard key={b.id} business={b} />
@@ -66,7 +66,7 @@ export function Explore() {
 
       <section className="mt-7 px-4 pb-6 md:px-6">
         <div className="mb-3 flex items-center justify-between gap-2">
-          <h2 className="font-serif text-lg font-semibold text-ink">Productos destacados</h2>
+          <h2 className="text-lg font-bold tracking-tight text-ink">Productos destacados</h2>
           <SortSelect value={sort} onChange={setSort} />
         </div>
 
