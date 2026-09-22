@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Minus, Plus, CheckCircle2 } from 'lucide-react';
-import type { Product } from '../types';
+import type { Product, ProductVariant } from '../types';
 import { Button } from './Button';
 import { formatCOP } from '../utils/format';
 import { isProductOnSale, getDiscountedPrice } from '../utils/discount';
@@ -11,12 +11,15 @@ import { useToast } from '../hooks/useToast';
 
 interface PurchaseModalProps {
   product: Product;
+  // Variante elegida en ProductDetail cuando el producto tiene variantes
+  // (null si el producto no tiene o todavía no se eligió ninguna).
+  variant?: ProductVariant | null;
   onClose: () => void;
 }
 
 type Step = 'quantity' | 'confirm' | 'success';
 
-export function PurchaseModal({ product, onClose }: PurchaseModalProps) {
+export function PurchaseModal({ product, variant = null, onClose }: PurchaseModalProps) {
   const { profile } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -28,10 +31,13 @@ export function PurchaseModal({ product, onClose }: PurchaseModalProps) {
 
   // Si el producto está en oferta, el comprador paga el precio con
   // descuento — mostrarlo tachado en la tarjeta no serviría de nada si al
-  // final se le sigue cobrando el precio normal.
-  const onSale = isProductOnSale(product);
-  const unitPrice = onSale ? getDiscountedPrice(product) : product.price;
+  // final se le sigue cobrando el precio normal. Los descuentos no aplican
+  // a productos con variantes (cada variante ya tiene su propio precio).
+  const onSale = !variant && isProductOnSale(product);
+  const unitPrice = variant ? variant.price : onSale ? getDiscountedPrice(product) : product.price;
+  const availableStock = variant ? variant.stock : product.stock;
   const total = unitPrice * quantity;
+  const displayName = variant ? `${product.name} (${variant.name})` : product.name;
 
   const handleConfirm = async () => {
     if (!profile) return;
@@ -43,6 +49,8 @@ export function PurchaseModal({ product, onClose }: PurchaseModalProps) {
       product_id: product.id,
       quantity,
       unit_price: unitPrice,
+      variant_id: variant?.id ?? null,
+      variant_name: variant?.name ?? null,
     });
     setLoading(false);
     if (error) {
@@ -70,7 +78,7 @@ export function PurchaseModal({ product, onClose }: PurchaseModalProps) {
           <div>
             <div className="flex items-center gap-3 rounded-card bg-surface p-3">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-ink truncate">{product.name}</p>
+                <p className="text-sm font-semibold text-ink truncate">{displayName}</p>
                 <p className="text-sm text-ink/50">
                   {onSale && (
                     <span className="mr-1.5 text-ink/40 line-through">{formatCOP(product.price)}</span>
@@ -91,15 +99,15 @@ export function PurchaseModal({ product, onClose }: PurchaseModalProps) {
               </button>
               <span className="w-10 text-center text-2xl font-bold text-ink">{quantity}</span>
               <button
-                onClick={() => setQuantity((q) => Math.min(product.stock, q + 1))}
+                onClick={() => setQuantity((q) => Math.min(availableStock, q + 1))}
                 className="flex h-11 w-11 items-center justify-center rounded-full border border-ink/15 text-ink disabled:opacity-40"
-                disabled={quantity >= product.stock}
+                disabled={quantity >= availableStock}
                 aria-label="Aumentar cantidad"
               >
                 <Plus size={18} />
               </button>
             </div>
-            <p className="mt-2 text-center text-xs text-ink/40">{product.stock} disponibles</p>
+            <p className="mt-2 text-center text-xs text-ink/40">{availableStock} disponibles</p>
 
             <div className="mt-6 flex items-center justify-between border-t border-ink/8 pt-4">
               <span className="text-sm font-medium text-ink/60">Total</span>
@@ -115,7 +123,7 @@ export function PurchaseModal({ product, onClose }: PurchaseModalProps) {
         {step === 'confirm' && (
           <div>
             <div className="rounded-card bg-surface p-4 space-y-2.5">
-              <Row label="Producto" value={product.name} />
+              <Row label="Producto" value={displayName} />
               <Row label="Emprendimiento" value={product.business?.name ?? '—'} />
               <Row label="Cantidad" value={String(quantity)} />
               <Row label="Total" value={formatCOP(total)} bold />
@@ -146,7 +154,7 @@ export function PurchaseModal({ product, onClose }: PurchaseModalProps) {
             <h2 className="text-lg font-bold text-ink">¡Pedido realizado!</h2>
 
             <div className="mt-5 w-full rounded-card bg-surface p-4 space-y-2.5 text-left">
-              <Row label="Producto" value={product.name} />
+              <Row label="Producto" value={displayName} />
               <Row label="Emprendimiento" value={product.business?.name ?? '—'} />
               <Row label="Cantidad" value={String(quantity)} />
               <Row label="Total" value={formatCOP(total)} bold />
