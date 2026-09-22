@@ -9,7 +9,7 @@ import { areNotificationsMuted } from '../utils/notificationPrefs';
 
 const POLL_MS = 60000;
 
-export function NotificationBell() {
+export function NotificationBell({ tone = 'default' }: { tone?: 'default' | 'light' }) {
   const { profile } = useAuth();
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
@@ -64,7 +64,9 @@ export function NotificationBell() {
     <div ref={containerRef} className="relative">
       <button
         onClick={handleOpen}
-        className="relative flex h-9 w-9 items-center justify-center rounded-full text-ink/60 hover:bg-ink/5"
+        className={`relative flex items-center justify-center rounded-full ${
+        tone === 'light' ? 'h-10 w-10 bg-white/15 text-white hover:bg-white/25' : 'h-9 w-9 text-ink/60 hover:bg-ink/5'
+      }`}
         aria-label="Notificaciones"
       >
         <Bell size={18} />
