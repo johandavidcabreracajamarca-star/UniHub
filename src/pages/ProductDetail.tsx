@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ShoppingBag, MapPin } from 'lucide-react';
-import type { Product } from '../types';
+import type { Product, ProductVariant } from '../types';
 import { CATEGORY_LABELS } from '../types';
 import { productService } from '../services/productService';
 import { formatCOP } from '../utils/format';
 import { isProductOnSale, getDiscountedPrice } from '../utils/discount';
+import { hasVariants, isProductSoldOut } from '../utils/variants';
 import { ProductImage } from '../components/ProductImage';
 import { VerifiedBadge } from '../components/VerifiedBadge';
 import { StarRating } from '../components/StarRating';
@@ -23,6 +24,7 @@ export function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [showPurchase, setShowPurchase] = useState(false);
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
 
   const load = async () => {
     if (!id) return;
@@ -31,6 +33,8 @@ export function ProductDetail() {
     try {
       const data = await productService.getById(id);
       setProduct(data);
+      // Si solo hay una variante, no tiene sentido obligar a elegirla.
+      setSelectedVariant(data?.variants?.length === 1 ? data.variants[0] : null);
     } catch {
       setError(true);
     } finally {
@@ -59,8 +63,16 @@ export function ProductDetail() {
   }
 
   const business = product.business;
-  const onSale = isProductOnSale(product);
-  const finalPrice = onSale ? getDiscountedPrice(product) : product.price;
+  const productHasVariants = hasVariants(product);
+  const onSale = isProductOnSale(product) && !productHasVariants;
+  const soldOut = isProductSoldOut(product);
+  // Con variantes, el precio/stock a mostrar dependen de la que se eligió.
+  const finalPrice = productHasVariants
+    ? selectedVariant?.price ?? null
+    : onSale
+      ? getDiscountedPrice(product)
+      : product.price;
+  const canBuy = product.available && (!productHasVariants || Boolean(selectedVariant && selectedVariant.stock > 0));
 
   return (
     <div className="pb-28 md:pb-10">
@@ -82,7 +94,7 @@ export function ProductDetail() {
         >
           <ArrowLeft size={19} />
         </button>
-        {!product.available && (
+        {soldOut && (
           <span className="absolute right-4 top-4 rounded-full bg-ink px-3 py-1 text-xs font-medium text-white">
             Agotado
           </span>
@@ -115,9 +127,42 @@ export function ProductDetail() {
 
         <p className="mt-4 text-sm leading-relaxed text-ink/70">{product.description}</p>
 
-        <div className="mt-3 flex items-center gap-3 text-xs text-ink/50">
-          <span>{product.available ? `${product.stock} disponibles` : 'Sin stock'}</span>
-        </div>
+        {productHasVariants ? (
+          <div className="mt-4">
+            <p className="mb-2 text-sm font-medium text-ink">Elige una opción</p>
+            <div className="flex flex-wrap gap-2">
+              {product.variants!.map((v) => {
+                const active = selectedVariant?.id === v.id;
+                const outOfStock = v.stock <= 0;
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    disabled={outOfStock}
+                    onClick={() => setSelectedVariant(v)}
+                    className={`rounded-full border px-3.5 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                      active
+                        ? 'border-primary bg-primary text-white'
+                        : 'border-ink/15 bg-white text-ink hover:border-primary/50'
+                    }`}
+                  >
+                    {v.name} · {formatCOP(v.price)}
+                    {outOfStock && ' (agotado)'}
+                  </button>
+                );
+              })}
+            </div>
+            {selectedVariant && (
+              <p className="mt-2 text-xs text-ink/50">
+                {selectedVariant.stock > 0 ? `${selectedVariant.stock} disponibles` : 'Sin stock'}
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="mt-3 flex items-center gap-3 text-xs text-ink/50">
+            <span>{product.available ? `${product.stock} disponibles` : 'Sin stock'}</span>
+          </div>
+        )}
 
         {business && (
           <button
@@ -147,12 +192,14 @@ export function ProductDetail() {
       <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-4 border-t border-ink/8 bg-white px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 md:static md:mt-6 md:border-0 md:px-6 md:max-w-2xl md:mx-auto">
         <div className="shrink-0">
           {onSale && <p className="text-xs leading-none text-ink/40 line-through">{formatCOP(product.price)}</p>}
-          <p className="text-2xl font-extrabold leading-tight tracking-tight text-accent">{formatCOP(finalPrice)}</p>
+          <p className="text-2xl font-extrabold leading-tight tracking-tight text-accent">
+            {finalPrice != null ? formatCOP(finalPrice) : 'Elige una opción'}
+          </p>
         </div>
         <Button
           size="lg"
           fullWidth
-          disabled={!product.available}
+          disabled={!canBuy}
           onClick={() => {
             if (!profile) {
               navigate('/login');
@@ -161,13 +208,14 @@ export function ProductDetail() {
             setShowPurchase(true);
           }}
         >
-          {product.available ? 'Comprar' : 'No disponible'}
+          {!product.available ? 'No disponible' : productHasVariants && !selectedVariant ? 'Elige una opción' : canBuy ? 'Comprar' : 'Agotado'}
         </Button>
       </div>
 
       {showPurchase && (
         <PurchaseModal
           product={product}
+          variant={selectedVariant}
           onClose={() => {
             setShowPurchase(false);
             load();
