@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
+import { BrandMark } from '../components/BrandMark';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { authService } from '../services/authService';
@@ -52,10 +53,8 @@ export function Login() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-surface px-6 py-12">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-white">
-            <ShoppingBag size={22} />
-          </div>
-          <h1 className="text-xl font-bold text-ink">Bienvenido de nuevo</h1>
+          <BrandMark size={56} className="mb-4 drop-shadow-md" />
+          <h1 className="font-serif text-2xl font-semibold tracking-tight text-ink">Bienvenido de nuevo</h1>
           <p className="mt-1 text-sm text-ink/50">Inicia sesión con tu correo institucional</p>
         </div>
 
