@@ -84,7 +84,10 @@ export function DashboardOrders() {
                 seedKey={item?.product?.id}
               />
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-ink truncate">{item?.product?.name ?? 'Producto'}</p>
+                <p className="text-sm font-semibold text-ink truncate">
+                  {item?.product?.name ?? 'Producto'}
+                  {item?.variant_name && <span className="font-normal text-ink/50"> · {item.variant_name}</span>}
+                </p>
                 <p className="text-xs text-ink/50">Comprador: {order.buyer?.full_name ?? 'Estudiante'}</p>
                 <p className="text-xs text-ink/40">
                   {item ? `Cantidad: ${item.quantity}` : ''} · {formatDateTime(order.created_at)}
