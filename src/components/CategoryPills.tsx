@@ -11,6 +11,16 @@ const CATEGORY_ICONS: Record<ProductCategory, typeof Utensils> = {
   otros: Grid3x3,
 };
 
+// Color de cada categoría cuando NO está seleccionada (paleta de la marca).
+const CATEGORY_TONES: Record<ProductCategory, string> = {
+  comida: 'bg-secondary-light text-secondary',
+  ropa: 'bg-accent-light text-accent',
+  tecnologia: 'bg-primary-light text-primary',
+  accesorios: 'bg-secondary-light text-accent',
+  servicios: 'bg-ink/10 text-ink',
+  otros: 'bg-white text-ink/60',
+};
+
 const CATEGORIES: ProductCategory[] = ['comida', 'ropa', 'tecnologia', 'accesorios', 'servicios', 'otros'];
 
 interface CategoryPillsProps {
@@ -20,43 +30,57 @@ interface CategoryPillsProps {
 
 export function CategoryPills({ selected, onSelect }: CategoryPillsProps) {
   return (
-    <div className="flex gap-2.5 overflow-x-auto px-4 pb-1 scrollbar-none md:px-0">
-      <PillButton active={selected === 'todas'} onClick={() => onSelect('todas')} label="Todas" Icon={Grid3x3} />
+    <div className="flex gap-3 overflow-x-auto px-4 pb-2 pt-1 scrollbar-none md:px-0">
+      <Tile
+        active={selected === 'todas'}
+        onClick={() => onSelect('todas')}
+        label="Todas"
+        Icon={Grid3x3}
+        tone="bg-white text-ink/60"
+      />
       {CATEGORIES.map((cat) => (
-        <PillButton
+        <Tile
           key={cat}
           active={selected === cat}
           onClick={() => onSelect(cat)}
           label={CATEGORY_LABELS[cat]}
           Icon={CATEGORY_ICONS[cat]}
+          tone={CATEGORY_TONES[cat]}
         />
       ))}
     </div>
   );
 }
 
-function PillButton({
+function Tile({
   active,
   onClick,
   label,
   Icon,
+  tone,
 }: {
   active: boolean;
   onClick: () => void;
   label: string;
   Icon: typeof Utensils;
+  tone: string;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-medium transition-colors min-h-[36px] ${
-        active
-          ? 'border-primary bg-primary text-white'
-          : 'border-ink/12 bg-white text-ink/60 hover:bg-ink/5'
-      }`}
+      aria-pressed={active}
+      className="flex w-[68px] shrink-0 flex-col items-center gap-1.5"
     >
-      <Icon size={14} />
-      {label}
+      <span
+        className={`flex h-16 w-16 items-center justify-center rounded-[20px] shadow-card transition-all duration-200 active:scale-95 ${
+          active ? 'scale-105 bg-primary text-white ring-2 ring-primary/30' : tone
+        }`}
+      >
+        <Icon size={26} strokeWidth={1.7} />
+      </span>
+      <span className={`whitespace-nowrap text-[11.5px] font-semibold ${active ? 'text-primary' : 'text-ink'}`}>
+        {label}
+      </span>
     </button>
   );
 }
