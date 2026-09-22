@@ -1,12 +1,11 @@
 import { useNavigate } from 'react-router-dom';
-import { ShoppingBag } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import type { Product } from '../types';
 import { formatCOP } from '../utils/format';
 import { formatDistance } from '../utils/geo';
 import { isProductOnSale, getDiscountedPrice } from '../utils/discount';
 import { ProductImage } from './ProductImage';
 import { VerifiedBadge } from './VerifiedBadge';
-import { StarRating } from './StarRating';
 
 export function ProductCard({
   product,
@@ -22,11 +21,12 @@ export function ProductCard({
   const distanceLabel = formatDistance(distanceMeters);
   const onSale = isProductOnSale(product);
   const finalPrice = onSale ? getDiscountedPrice(product) : product.price;
+  const availableNow = business?.available_now;
 
   return (
     <button
       onClick={() => navigate(`/product/${product.id}`)}
-      className="group text-left w-full rounded-card bg-white shadow-card hover:shadow-card-hover overflow-hidden border border-ink/5 transition-all duration-200 ease-out hover:-translate-y-1 active:scale-[0.98] active:shadow-card"
+      className="group w-full overflow-hidden rounded-card bg-white text-left shadow-card transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-card-hover active:scale-[0.98] active:shadow-card"
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden">
         <ProductImage
@@ -39,58 +39,46 @@ export function ProductCard({
         />
         {!product.available && (
           <div className="absolute inset-0 flex items-center justify-center bg-ink/50">
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-ink">
-              Agotado
-            </span>
+            <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-ink">Agotado</span>
           </div>
         )}
         {onSale && (
-          <span className="absolute left-2 top-2 rounded-full bg-accent px-2.5 py-1 text-[11px] font-semibold text-white shadow-card">
-            -{product.discount_percent}% OFF
+          <span className="absolute left-0 top-3 rounded-r-xl bg-accent py-1 pl-2.5 pr-3 text-xs font-bold text-white shadow-card">
+            -{product.discount_percent}%
           </span>
         )}
       </div>
 
-      <div className="p-3.5">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="text-sm font-semibold text-ink line-clamp-1">{product.name}</h3>
-        </div>
+      <div className="px-3 pb-3 pt-2.5">
+        <h3 className="line-clamp-1 text-sm font-semibold text-ink">{product.name}</h3>
 
         {business && (
-          <div className="mt-1 flex items-center gap-1 min-w-0">
-            <span className="text-xs text-ink/60 truncate">{business.name}</span>
+          <div className="mt-1 flex min-w-0 items-center gap-1">
+            <span className="truncate text-xs text-ink/60">{business.name}</span>
             {business.verified && <VerifiedBadge compact />}
+            {distanceLabel && <span className="shrink-0 text-xs text-ink/40">· {distanceLabel}</span>}
           </div>
         )}
 
-        {business && (
-          <p className="mt-0.5 text-[11px] text-ink/40 truncate">
-            {business.university_name} · {business.faculty_name}
-            {distanceLabel && ` · ${distanceLabel}`}
+        {typeof availableNow === 'boolean' && (
+          <p className="mt-1 flex items-center gap-1.5 text-xs text-ink/60">
+            <span className={`h-1.5 w-1.5 rounded-full ${availableNow ? 'bg-green-600' : 'bg-ink/30'}`} />
+            {availableNow ? 'Disponible ahora' : 'No disponible ahora'}
           </p>
         )}
 
-        <div className="mt-2.5 flex items-center justify-between">
-          <div className="flex flex-col gap-0.5">
-            {onSale ? (
-              <div className="flex items-baseline gap-1.5">
-                <span className="font-serif text-lg font-semibold text-ink">
-                  {formatCOP(finalPrice)}
-                </span>
-                <span className="text-xs text-ink/40 line-through">{formatCOP(product.price)}</span>
-              </div>
-            ) : (
-              <span className="font-serif text-lg font-semibold text-ink">
-                {formatCOP(product.price)}
-              </span>
+        <div className="mt-2 flex items-end justify-between">
+          <div className="flex flex-col">
+            {onSale && (
+              <span className="text-[11px] leading-none text-ink/40 line-through">{formatCOP(product.price)}</span>
             )}
-            {business && <StarRating rating={business.rating} size={12} />}
+            <span className="text-base font-bold text-ink">{formatCOP(finalPrice)}</span>
           </div>
           <span
-            className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-primary text-white shrink-0 transition-all duration-200 group-hover:bg-primary-dark group-hover:scale-110 group-active:scale-95"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-white transition-all duration-200 group-hover:scale-110 group-active:scale-95"
             aria-label="Comprar"
           >
-            <ShoppingBag size={16} />
+            <Plus size={18} strokeWidth={2.4} />
           </span>
         </div>
       </div>
