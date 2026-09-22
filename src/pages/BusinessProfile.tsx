@@ -168,7 +168,7 @@ export function BusinessProfile() {
                     <span className="text-xs text-ink/40">{formatDate(r.created_at)}</span>
                   </div>
                   <div className="mt-1">
-                    <StarRating rating={r.rating} showValue={false} />
+                    <StarRating rating={r.rating} variant="stars" size={16} />
                   </div>
                   {r.comment && <p className="mt-1.5 text-sm text-ink/70">{r.comment}</p>}
                 </div>
