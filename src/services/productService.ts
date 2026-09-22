@@ -74,7 +74,7 @@ export const productService = {
     if (isSupabaseConfigured && supabase) {
       let queryBuilder = supabase
         .from('products')
-        .select('*, business:businesses(*)')
+        .select('*, business:businesses(*), variants:product_variants(*)')
         .order('created_at', { ascending: false });
       if (filters.category && filters.category !== 'todas') {
         queryBuilder = queryBuilder.eq('category', filters.category);
@@ -122,7 +122,7 @@ export const productService = {
     if (isSupabaseConfigured && supabase) {
       const { data } = await supabase
         .from('products')
-        .select('*, business:businesses(*)')
+        .select('*, business:businesses(*), variants:product_variants(*)')
         .eq('id', id)
         .single();
       return (data as Product) ?? null;
@@ -135,7 +135,7 @@ export const productService = {
     if (isSupabaseConfigured && supabase) {
       const { data } = await supabase
         .from('products')
-        .select('*')
+        .select('*, variants:product_variants(*)')
         .eq('business_id', businessId)
         .order('created_at', { ascending: false });
       return (data as Product[]) ?? [];
