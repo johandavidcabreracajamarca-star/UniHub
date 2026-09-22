@@ -3,6 +3,7 @@ import type { Order, OrderStatus } from '../types';
 import { demoDb } from '../data/demoDb';
 import { businessService } from './businessService';
 import { productService } from './productService';
+import { productVariantService } from './productVariantService';
 import { notificationService } from './notificationService';
 import { demoProfiles } from '../data/demoData';
 
@@ -74,6 +75,11 @@ export const orderService = {
     product_id: string;
     quantity: number;
     unit_price: number;
+    // Cuando el producto tiene variantes, cuál se eligió. variant_name se
+    // guarda tal cual en el pedido (no solo el id) para que el historial no
+    // pierda esa info si luego se borra o cambia esa variante.
+    variant_id?: string | null;
+    variant_name?: string | null;
   }): Promise<{ order: Order | null; error: string | null }> {
     if (input.quantity <= 0) {
       return { order: null, error: 'La cantidad debe ser mayor a cero.' };
@@ -98,7 +104,11 @@ export const orderService = {
         product_id: input.product_id,
         quantity: input.quantity,
         unit_price: input.unit_price,
+        variant_id: input.variant_id ?? null,
+        variant_name: input.variant_name ?? null,
       });
+      // El trigger trg_decrement_stock_on_order_item (ver supabase/schema.sql)
+      // descuenta el stock automáticamente al insertar el item de arriba.
       if (itemError) return { order: null, error: itemError.message };
       return { order: order as Order, error: null };
     }
@@ -108,7 +118,12 @@ export const orderService = {
     if (!product || !product.available) {
       return { order: null, error: 'El producto ya no está disponible.' };
     }
-    if (product.stock < input.quantity) {
+    const variant = input.variant_id ? product.variants?.find((v) => v.id === input.variant_id) : null;
+    if (input.variant_id) {
+      if (!variant || variant.stock < input.quantity) {
+        return { order: null, error: 'No hay suficiente stock disponible para esa variante.' };
+      }
+    } else if (product.stock < input.quantity) {
       return { order: null, error: 'No hay suficiente stock disponible.' };
     }
 
@@ -127,6 +142,8 @@ export const orderService = {
           product_id: input.product_id,
           quantity: input.quantity,
           unit_price: input.unit_price,
+          variant_id: input.variant_id ?? null,
+          variant_name: input.variant_name ?? null,
         },
       ],
     };
@@ -134,8 +151,12 @@ export const orderService = {
     orders.unshift(newOrder);
     demoDb.saveOrders(orders);
 
-    // Descontar stock
-    await productService.update(product.id, { stock: product.stock - input.quantity });
+    // Descontar stock (de la variante si aplica, o del producto)
+    if (input.variant_id) {
+      await productVariantService.decrementDemoStock(product.id, input.variant_id, input.quantity);
+    } else {
+      await productService.update(product.id, { stock: product.stock - input.quantity });
+    }
 
     return { order: await enrichOrder(newOrder), error: null };
   },
