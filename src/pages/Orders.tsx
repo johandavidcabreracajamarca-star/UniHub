@@ -99,6 +99,9 @@ export function Orders() {
                     <div className="flex items-start justify-between gap-2">
                       <p className="text-sm font-semibold text-ink line-clamp-1">
                         {item?.product?.name ?? 'Producto eliminado'}
+                        {item?.variant_name && (
+                          <span className="font-normal text-ink/50"> · {item.variant_name}</span>
+                        )}
                       </p>
                       <OrderStatusBadge status={order.status} />
                     </div>
