@@ -123,6 +123,19 @@ export interface Product {
   discount_ends_at?: string | null;
   // campos derivados (joins), opcionales para la UI
   business?: Business;
+  // Opciones del producto (ej. sabores, tallas), cada una con su propio
+  // precio y stock. Si el producto no tiene variantes, este campo viene
+  // vacío o undefined y se sigue usando price/stock directamente.
+  variants?: ProductVariant[];
+}
+
+export interface ProductVariant {
+  id: string;
+  product_id: string;
+  name: string;
+  price: number;
+  stock: number;
+  created_at: string;
 }
 
 export interface Order {
@@ -146,6 +159,11 @@ export interface OrderItem {
   product_id: string;
   quantity: number;
   unit_price: number;
+  // Variante comprada (si el producto tenía). variant_name se guarda tal
+  // como era al momento de la compra, para no perder esa info en el
+  // historial aunque el emprendedor después cambie sus variantes.
+  variant_id?: string | null;
+  variant_name?: string | null;
   product?: Product;
 }
 
