@@ -64,11 +64,12 @@ export function ProductDetail() {
 
   return (
     <div className="pb-28 md:pb-10">
-      <div className="relative">
+      <div className="px-4 pt-4 md:px-0 md:pt-0">
+      <div className="relative overflow-hidden rounded-[30px] md:rounded-none">
         <ProductImage
           src={product.image}
           category={product.category}
-          className="aspect-square w-full md:aspect-[21/9]"
+          className="aspect-[5/4] w-full md:aspect-[21/9]"
           iconSize={44}
           alt={product.name}
           name={product.name}
@@ -76,7 +77,7 @@ export function ProductDetail() {
         />
         <button
           onClick={() => navigate(-1)}
-          className="absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-ink shadow-card"
+          className="absolute left-3.5 top-3.5 flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink shadow-card"
           aria-label="Volver"
         >
           <ArrowLeft size={19} />
@@ -87,25 +88,30 @@ export function ProductDetail() {
           </span>
         )}
         {onSale && (
-          <span className="absolute left-4 top-4 rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white">
-            -{product.discount_percent}% OFF
+          <span className="absolute bottom-4 left-4 rounded-xl bg-accent px-3 py-1.5 text-sm font-bold text-white shadow-card">
+            -{product.discount_percent}%
           </span>
         )}
       </div>
+      </div>
 
-      <div className="px-4 pt-5 md:px-6 md:max-w-2xl md:mx-auto">
-        <span className="text-xs font-medium uppercase tracking-wide text-primary">
-          {CATEGORY_LABELS[product.category]}
-        </span>
-        <h1 className="mt-1 text-xl font-bold text-ink">{product.name}</h1>
-        {onSale ? (
-          <div className="mt-1.5 flex items-center gap-2.5">
-            <p className="text-2xl font-bold text-ink">{formatCOP(finalPrice)}</p>
-            <p className="text-sm text-ink/40 line-through">{formatCOP(product.price)}</p>
-          </div>
-        ) : (
-          <p className="mt-1.5 text-2xl font-bold text-ink">{formatCOP(product.price)}</p>
-        )}
+      <div className="px-4 pt-4 md:px-6 md:max-w-2xl md:mx-auto">
+        <div className="flex flex-wrap items-center gap-2">
+          {typeof business?.available_now === 'boolean' && (
+            <span
+              className={`inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-xs font-semibold ${
+                business.available_now ? 'bg-green-100 text-green-800' : 'bg-ink/8 text-ink/60'
+              }`}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${business.available_now ? 'bg-green-600' : 'bg-ink/30'}`} />
+              {business.available_now ? 'Disponible ahora' : 'No disponible ahora'}
+            </span>
+          )}
+          <span className="inline-flex h-7 items-center rounded-full bg-primary-light px-3 text-xs font-semibold text-primary">
+            {CATEGORY_LABELS[product.category]}
+          </span>
+        </div>
+        <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight text-ink">{product.name}</h1>
 
         <p className="mt-4 text-sm leading-relaxed text-ink/70">{product.description}</p>
 
@@ -138,7 +144,11 @@ export function ProductDetail() {
         )}
       </div>
 
-      <div className="fixed bottom-16 left-0 right-0 z-30 border-t border-ink/8 bg-white p-4 md:static md:mt-6 md:border-0 md:px-6 md:max-w-2xl md:mx-auto">
+      <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-4 border-t border-ink/8 bg-white px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 md:static md:mt-6 md:border-0 md:px-6 md:max-w-2xl md:mx-auto">
+        <div className="shrink-0">
+          {onSale && <p className="text-xs leading-none text-ink/40 line-through">{formatCOP(product.price)}</p>}
+          <p className="text-2xl font-extrabold leading-tight tracking-tight text-accent">{formatCOP(finalPrice)}</p>
+        </div>
         <Button
           size="lg"
           fullWidth
