@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Compass, Search, Receipt, User, ShoppingBag } from 'lucide-react';
+import { Compass, Search, Receipt, User } from 'lucide-react';
+import { BrandMark } from './BrandMark';
 import { useAuth } from '../hooks/useAuth';
 import { NotificationBell } from './NotificationBell';
 import { MessagesIcon } from './MessagesIcon';
@@ -19,11 +20,9 @@ export function TopNav() {
       <div className="mx-auto flex max-w-desktop items-center justify-between px-6 py-3.5">
         <button
           onClick={() => navigate('/explore')}
-          className="flex items-center gap-2 text-lg font-bold text-ink"
+          className="flex items-center gap-2.5 font-serif text-xl font-semibold tracking-tight text-ink"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-control bg-primary text-white">
-            <ShoppingBag size={18} />
-          </span>
+          <BrandMark size={36} />
           UniHub
         </button>
 
