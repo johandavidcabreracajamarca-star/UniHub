@@ -100,6 +100,23 @@ create index idx_products_business on products(business_id);
 create index idx_products_category on products(category);
 
 -- ----------------------------------------------------------------------------
+-- PRODUCT_VARIANTS
+-- Opciones de un producto (ej. sabores, tallas), cada una con su propio
+-- precio y stock. Un producto sin variantes no tiene filas acá y sigue
+-- usando price/stock directamente.
+-- ----------------------------------------------------------------------------
+create table product_variants (
+  id uuid primary key default gen_random_uuid(),
+  product_id uuid not null references products(id) on delete cascade,
+  name text not null,
+  price numeric(10,2) not null check (price >= 0),
+  stock integer not null default 0 check (stock >= 0),
+  created_at timestamptz not null default now()
+);
+
+create index idx_product_variants_product on product_variants(product_id);
+
+-- ----------------------------------------------------------------------------
 -- ORDERS
 -- ----------------------------------------------------------------------------
 create table orders (
@@ -122,7 +139,13 @@ create table order_items (
   order_id uuid not null references orders(id) on delete cascade,
   product_id uuid not null references products(id),
   quantity integer not null check (quantity > 0),
-  unit_price numeric(10,2) not null check (unit_price >= 0)
+  unit_price numeric(10,2) not null check (unit_price >= 0),
+  -- Variante comprada (si el producto tenía). variant_id queda en null si
+  -- esa variante se borra/reemplaza después; variant_name guarda el nombre
+  -- tal como era en el momento de la compra, para no perder esa info en el
+  -- historial de pedidos.
+  variant_id uuid references product_variants(id) on delete set null,
+  variant_name text
 );
 
 create index idx_order_items_order on order_items(order_id);
@@ -165,6 +188,29 @@ after insert or update or delete on reviews
 for each row execute function update_business_rating();
 
 -- ============================================================================
+-- FUNCIÓN: descontar stock al crear un pedido (producto o variante)
+-- ============================================================================
+create or replace function decrement_stock_on_order_item()
+returns trigger as $$
+begin
+  if new.variant_id is not null then
+    update product_variants
+    set stock = greatest(stock - new.quantity, 0)
+    where id = new.variant_id;
+  else
+    update products
+    set stock = greatest(stock - new.quantity, 0)
+    where id = new.product_id;
+  end if;
+  return new;
+end;
+$$ language plpgsql security definer;
+
+create trigger trg_decrement_stock_on_order_item
+after insert on order_items
+for each row execute function decrement_stock_on_order_item();
+
+-- ============================================================================
 -- FUNCIÓN: helper para saber si el usuario actual es dueño del negocio
 -- ============================================================================
 create or replace function is_business_owner(biz_id uuid)
@@ -184,6 +230,7 @@ alter table faculties enable row level security;
 alter table profiles enable row level security;
 alter table businesses enable row level security;
 alter table products enable row level security;
+alter table product_variants enable row level security;
 alter table orders enable row level security;
 alter table order_items enable row level security;
 alter table reviews enable row level security;
@@ -247,6 +294,46 @@ create policy "products_update_own_business" on products
 
 create policy "products_delete_own_business" on products
   for delete using (is_business_owner(business_id));
+
+-- ---------------- PRODUCT_VARIANTS ----------------
+-- Lectura pública
+create policy "product_variants_select_all" on product_variants
+  for select using (true);
+
+-- Solo el dueño del emprendimiento dueño del producto puede crear/editar/borrar
+create policy "product_variants_insert_own_business" on product_variants
+  for insert with check (
+    exists (
+      select 1 from products p
+      where p.id = product_variants.product_id
+        and is_business_owner(p.business_id)
+    )
+  );
+
+create policy "product_variants_update_own_business" on product_variants
+  for update using (
+    exists (
+      select 1 from products p
+      where p.id = product_variants.product_id
+        and is_business_owner(p.business_id)
+    )
+  )
+  with check (
+    exists (
+      select 1 from products p
+      where p.id = product_variants.product_id
+        and is_business_owner(p.business_id)
+    )
+  );
+
+create policy "product_variants_delete_own_business" on product_variants
+  for delete using (
+    exists (
+      select 1 from products p
+      where p.id = product_variants.product_id
+        and is_business_owner(p.business_id)
+    )
+  );
 
 -- ---------------- ORDERS ----------------
 -- El comprador ve sus propios pedidos; el emprendedor ve pedidos de su emprendimiento
