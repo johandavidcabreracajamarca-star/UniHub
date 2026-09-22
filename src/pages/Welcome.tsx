@@ -1,5 +1,6 @@
 import { Navigate, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Sparkles, ShieldCheck, Users } from 'lucide-react';
+import { Sparkles, ShieldCheck, Users } from 'lucide-react';
+import { BrandMark } from '../components/BrandMark';
 import { Button } from '../components/Button';
 import { LoadingScreen } from '../components/LoadingScreen';
 import { useAuth } from '../hooks/useAuth';
@@ -22,14 +23,15 @@ export function Welcome() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-surface">
+    <div
+      className="flex min-h-screen flex-col bg-surface"
+      style={{ backgroundImage: 'radial-gradient(700px 320px at 50% 0%, rgba(63,90,58,0.16), transparent 70%)' }}
+    >
       <div className="flex flex-1 flex-col items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm">
           <div className="mb-8 flex flex-col items-center text-center">
-            <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-white shadow-card-hover">
-              <ShoppingBag size={30} />
-            </div>
-            <h1 className="text-3xl font-bold tracking-tight text-ink">UniHub</h1>
+            <BrandMark size={88} className="mb-5 drop-shadow-lg" />
+            <h1 className="font-serif text-4xl font-semibold tracking-tight text-ink">UniHub</h1>
             <p className="mt-2 text-base font-medium text-ink/60">
               Conectando ideas, impulsando emprendimientos.
             </p>
