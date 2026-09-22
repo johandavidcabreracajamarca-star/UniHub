@@ -11,6 +11,7 @@ import { ProductImage } from '../../components/ProductImage';
 import { EmptyState, RowSkeleton } from '../../components/StateViews';
 import { formatCOP } from '../../utils/format';
 import { isProductOnSale } from '../../utils/discount';
+import { getVariantPriceRange, totalVariantStock } from '../../utils/variants';
 
 export function DashboardProducts() {
   const { business, loading: loadingBusiness, refresh: refreshBusiness } = useMyBusiness();
@@ -90,7 +91,10 @@ export function DashboardProducts() {
 
       {!loading && products.length > 0 && (
         <div className="flex flex-col gap-3">
-          {products.map((product) => (
+          {products.map((product) => {
+            const variantRange = getVariantPriceRange(product);
+            const variantStock = totalVariantStock(product);
+            return (
             <div key={product.id} className="flex items-center gap-3 rounded-card border border-ink/8 bg-white p-3 shadow-card">
               <ProductImage
                 src={product.image}
@@ -103,9 +107,20 @@ export function DashboardProducts() {
               />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-ink truncate">{product.name}</p>
-                <p className="text-sm text-ink/50">{formatCOP(product.price)}</p>
+                <p className="text-sm text-ink/50">
+                  {variantRange
+                    ? variantRange.min === variantRange.max
+                      ? formatCOP(variantRange.min)
+                      : `Desde ${formatCOP(variantRange.min)}`
+                    : formatCOP(product.price)}
+                  {variantRange && (
+                    <span className="ml-1 text-xs text-ink/40">
+                      · {product.variants!.length} variante{product.variants!.length === 1 ? '' : 's'}
+                    </span>
+                  )}
+                </p>
                 <p className="text-xs text-ink/40">
-                  Stock: {product.stock} ·{' '}
+                  Stock: {variantRange ? variantStock : product.stock} ·{' '}
                   <span className={product.available ? 'text-primary' : 'text-red-500'}>
                     {product.available ? 'Disponible' : 'Desactivado'}
                   </span>
@@ -140,7 +155,8 @@ export function DashboardProducts() {
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
