@@ -14,8 +14,30 @@
 // sube el número de CACHE_NAME (v1 -> v2, etc.).
 // ============================================================================
 
-const CACHE_NAME = 'unihub-cache-v1';
+const CACHE_NAME = 'unihub-cache-v2';
 const APP_SHELL = ['/', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png'];
+
+// Si la red tarda más que esto, dejamos de esperarla y usamos lo que haya en
+// caché (o el "app shell" si es la primera carga de esa página). Sin este
+// límite, un 4G lento o inestable puede dejar la pantalla de inicio (el
+// ícono) pegada indefinidamente, porque el fetch nunca llega a resolverse.
+const NETWORK_TIMEOUT_MS = 4000;
+
+function fetchWithTimeout(request, ms) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('network timeout')), ms);
+    fetch(request).then(
+      (response) => {
+        clearTimeout(timer);
+        resolve(response);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      }
+    );
+  });
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -49,7 +71,7 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith(
     caches.match(request).then((cached) => {
-      const networkFetch = fetch(request)
+      const networkFetch = fetchWithTimeout(request, NETWORK_TIMEOUT_MS)
         .then((response) => {
           if (response && response.ok) {
             const responseClone = response.clone();
@@ -57,7 +79,20 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         })
-        .catch(() => cached);
+        .catch(async () => {
+          // La red falló o se demoró demasiado. Si había una copia en caché
+          // de esta misma URL, ya se habría usado más abajo (cached ||
+          // networkFetch) — este catch solo corre cuando NO había copia.
+          // Para una navegación (abrir la app / una ruta nueva), en vez de
+          // dejar la pantalla colgada le damos el "app shell" para que la
+          // aplicación al menos arranque, y ella misma pida sus datos en
+          // vivo apenas tenga conexión.
+          if (request.mode === 'navigate') {
+            const shell = await caches.match('/');
+            if (shell) return shell;
+          }
+          return Response.error();
+        });
 
       // "Stale-while-revalidate": si hay copia en caché, se muestra al instante
       // (rápido, funciona sin internet) y de fondo se actualiza con la red.
