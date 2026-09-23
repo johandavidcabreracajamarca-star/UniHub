@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, ShoppingBag, MapPin } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, MapPin, MessageCircle } from 'lucide-react';
 import type { Product, ProductVariant } from '../types';
 import { CATEGORY_LABELS } from '../types';
 import { productService } from '../services/productService';
+import { chatService } from '../services/chatService';
 import { formatCOP } from '../utils/format';
 import { isProductOnSale, getDiscountedPrice } from '../utils/discount';
 import { hasVariants, isProductSoldOut } from '../utils/variants';
@@ -23,6 +24,7 @@ export function ProductDetail() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [chatLoading, setChatLoading] = useState(false);
   const [showPurchase, setShowPurchase] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
 
@@ -73,6 +75,20 @@ export function ProductDetail() {
       ? getDiscountedPrice(product)
       : product.price;
   const canBuy = product.available && (!productHasVariants || Boolean(selectedVariant && selectedVariant.stock > 0));
+  const isOwnBusiness = business && profile?.id === business.owner_id;
+
+  const handleChat = async () => {
+    if (!business) return;
+    if (!profile) {
+      navigate('/login');
+      return;
+    }
+    setChatLoading(true);
+    const { conversation, error: chatError } = await chatService.getOrCreate(profile.id, business.id);
+    setChatLoading(false);
+    if (chatError || !conversation) return;
+    navigate(`/messages/${conversation.id}`);
+  };
 
   return (
     <div className="pb-28 md:pb-10">
@@ -165,27 +181,55 @@ export function ProductDetail() {
         )}
 
         {business && (
-          <button
-            onClick={() => navigate(`/business/${business.id}`)}
-            className="mt-5 flex w-full items-center gap-3 rounded-card border border-ink/8 bg-white p-3.5 text-left shadow-card"
-          >
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control bg-primary-light text-primary">
-              <ShoppingBag size={18} />
+          <div className="mt-5 flex flex-col gap-3">
+            <div className="flex items-center gap-3 rounded-card border border-ink/8 bg-white p-3.5 shadow-card">
+              <button
+                onClick={() => navigate(`/business/${business.id}`)}
+                className="flex min-w-0 flex-1 items-center gap-3 text-left"
+              >
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control bg-primary-light text-primary">
+                  <ShoppingBag size={18} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-semibold text-ink truncate">{business.name}</span>
+                    {business.verified && <VerifiedBadge compact />}
+                  </div>
+                  <div className="mt-0.5 flex items-center gap-2">
+                    <StarRating rating={business.rating} size={12} reviewCount={business.review_count} />
+                  </div>
+                  <p className="mt-0.5 flex items-center gap-1 text-[11px] text-ink/40">
+                    <MapPin size={11} />
+                    {business.university_name} · {business.faculty_name}
+                  </p>
+                </div>
+              </button>
+
+              {!isOwnBusiness && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  icon={<MessageCircle size={14} />}
+                  loading={chatLoading}
+                  onClick={handleChat}
+                  className="shrink-0"
+                >
+                  Chatear
+                </Button>
+              )}
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-semibold text-ink truncate">{business.name}</span>
-                {business.verified && <VerifiedBadge compact />}
+
+            <div className="flex items-start gap-2.5 rounded-card border border-ink/8 bg-white p-3.5 shadow-card">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-control bg-secondary-light text-secondary">
+                <MapPin size={16} />
               </div>
-              <div className="mt-0.5 flex items-center gap-2">
-                <StarRating rating={business.rating} size={12} reviewCount={business.review_count} />
+              <div>
+                <p className="text-sm font-medium text-ink">Punto de encuentro</p>
+                <p className="mt-0.5 text-xs text-ink/50">Lo acuerdas por chat con el emprendedor</p>
               </div>
-              <p className="mt-0.5 flex items-center gap-1 text-[11px] text-ink/40">
-                <MapPin size={11} />
-                {business.university_name} · {business.faculty_name}
-              </p>
             </div>
-          </button>
+          </div>
         )}
       </div>
 
