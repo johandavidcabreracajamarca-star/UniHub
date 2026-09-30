@@ -160,6 +160,12 @@ export function DashboardHome() {
 
   return (
     <div>
+      <img
+        src="/banner-emprende.jpg"
+        alt="Tu talento merece su propio espacio. Crea tu emprendimiento y conecta con tu comunidad universitaria."
+        className="mb-4 w-full rounded-card object-cover shadow-card"
+      />
+
       <div className="rounded-card border border-ink/8 bg-white p-4 shadow-card">
         <div className="flex items-center gap-3">
           <input
@@ -291,7 +297,7 @@ export function DashboardHome() {
           icon={<DollarSign size={17} />}
           label="Ventas"
           value={stats ? formatCOP(stats.totalSales) : '—'}
-          color="accent"
+          color="primary"
         />
         <StatCard
           icon={<Star size={17} />}
@@ -346,7 +352,7 @@ function StatCard({
   value: string;
   color: 'primary' | 'secondary' | 'accent';
 }) {
-  const bg = { primary: 'bg-primary-light text-primary-dark', secondary: 'bg-secondary-light text-secondary', accent: 'bg-accent-light text-accent' }[color];
+  const bg = { primary: 'bg-primary-light text-primary-dark', secondary: 'bg-secondary-light text-secondary', accent: 'bg-accent-light text-accent-dark' }[color];
   return (
     <div className="rounded-card border border-ink/8 bg-white p-3.5 shadow-card">
       <span className={`flex h-8 w-8 items-center justify-center rounded-control ${bg}`}>{icon}</span>

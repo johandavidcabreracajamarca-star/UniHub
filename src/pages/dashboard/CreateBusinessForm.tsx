@@ -1,5 +1,5 @@
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
-import { Store, Camera, Link2, X, Loader2, MapPin } from 'lucide-react';
+import { Store, Camera, Link2, X, Loader2, MapPin, Info, ArrowRight, Check } from 'lucide-react';
 import { Button } from '../../components/Button';
 import { Input, Select, Textarea } from '../../components/Input';
 import { businessService } from '../../services/businessService';
@@ -17,7 +17,7 @@ export function CreateBusinessForm({ onCreated }: { onCreated: () => void }) {
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState<ProductCategory>('otros');
+  const [category, setCategory] = useState<ProductCategory | ''>('');
   const [logo, setLogo] = useState('');
   const [logoBlob, setLogoBlob] = useState<Blob | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -76,6 +76,10 @@ export function CreateBusinessForm({ onCreated }: { onCreated: () => void }) {
       setError('Completa el nombre y la descripción de tu emprendimiento.');
       return;
     }
+    if (!category) {
+      setError('Selecciona una categoría para tu emprendimiento.');
+      return;
+    }
 
     const contactIssue = containsContactInfo(description) || containsContactInfo(name);
     if (contactIssue) {
@@ -126,161 +130,184 @@ export function CreateBusinessForm({ onCreated }: { onCreated: () => void }) {
     onCreated();
   };
 
+  // Botón con borde violeta (estilo del panel emprendedor).
+  const outlineViolet =
+    'flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl border-[1.5px] border-primary bg-white px-4 text-sm font-semibold text-primary transition-all hover:bg-primary-light active:scale-[0.98] disabled:opacity-60';
+
   return (
-    <div className="rounded-card border border-ink/8 bg-white p-5 shadow-card">
-      <div className="mb-4 flex flex-col items-center text-center">
-        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-light text-accent">
-          <Store size={22} />
+    <div className="flex flex-col gap-4">
+      <img
+        src="/banner-emprende.jpg"
+        alt="Tu talento merece su propio espacio. Crea tu emprendimiento y conecta con tu comunidad universitaria."
+        className="w-full rounded-card object-cover shadow-card"
+      />
+
+      <div className="rounded-card-lg border border-ink/5 bg-white p-5 shadow-card">
+        <div className="mb-5 flex items-center gap-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent-light text-accent-dark">
+            <Store size={22} />
+          </div>
+          <div>
+            <h2 className="font-serif text-2xl font-semibold leading-tight tracking-tight text-ink">
+              Crea tu emprendimiento
+            </h2>
+            <p className="text-sm text-ink/60">Conecta con tu comunidad universitaria.</p>
+          </div>
         </div>
-        <h2 className="text-base font-bold text-ink">Crea tu emprendimiento</h2>
-        <p className="mt-1 text-sm text-ink/50">
-          Antes de publicar productos, cuéntanos sobre tu emprendimiento. Empezará como{' '}
-          <strong>no verificado</strong>.
-        </p>
-      </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <Input
-          label="Nombre del emprendimiento"
-          placeholder="p. ej. Dulce EAN"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-
-        <div>
-          <span className="mb-1.5 block text-sm font-medium text-ink">Logo del emprendimiento</span>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            onChange={handleFileSelect}
-            className="hidden"
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <Input
+            label="Nombre del emprendimiento"
+            placeholder="Ej. Dulce Campus"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
           />
 
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-ink/20 bg-surface transition-colors hover:border-primary disabled:opacity-60"
-            >
-              {uploading ? (
-                <Loader2 size={20} className="animate-spin text-ink/40" />
-              ) : logo.trim() ? (
-                <img src={logo} alt="Vista previa del logo" className="h-full w-full object-cover" />
-              ) : (
-                <Camera size={20} className="text-ink/40" />
-              )}
-            </button>
+          <div>
+            <span className="mb-2 block text-sm font-medium text-ink">Logo del emprendimiento</span>
 
-            <div className="flex flex-1 flex-col gap-2">
-              <Button
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+
+            <div className="flex items-center gap-4">
+              <button
                 type="button"
-                variant="outline"
-                size="sm"
-                icon={<Camera size={14} />}
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
+                aria-label="Elegir logo"
+                className="relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-primary/40 bg-primary-light/60 transition-colors hover:border-primary disabled:opacity-60"
               >
-                {logo.trim() ? 'Cambiar logo' : 'Elegir logo'}
-              </Button>
+                {uploading ? (
+                  <Loader2 size={22} className="animate-spin text-primary" />
+                ) : logo.trim() ? (
+                  <img src={logo} alt="Vista previa del logo" className="h-full w-full object-cover" />
+                ) : (
+                  <Camera size={22} className="text-primary/60" />
+                )}
+              </button>
 
-              {logo.trim() ? (
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    setLogo('');
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className={outlineViolet}
+                >
+                  <Camera size={16} />
+                  {logo.trim() ? 'Cambiar logo' : 'Elegir logo'}
+                </button>
+
+                {logo.trim() ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLogo('');
+                      setLogoBlob(null);
+                    }}
+                    className="inline-flex items-center gap-1 self-start text-sm font-medium text-ink/60 hover:text-red-600"
+                  >
+                    <X size={14} />
+                    Quitar logo
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowUrlField((v) => !v)}
+                    className="inline-flex items-center gap-1.5 self-start text-sm font-medium text-primary hover:text-primary-dark"
+                  >
+                    <Link2 size={15} />
+                    Usar un enlace
+                  </button>
+                )}
+                <p className="text-xs text-ink/50">Opcional. Puedes agregarlo después.</p>
+              </div>
+            </div>
+
+            {showUrlField && !logo.trim() && (
+              <div className="mt-3">
+                <Input
+                  label="Enlace del logo (URL)"
+                  type="url"
+                  placeholder="https://ejemplo.com/mi-logo.jpg"
+                  value={logo}
+                  onChange={(e) => {
+                    setLogo(e.target.value);
                     setLogoBlob(null);
                   }}
-                  className="inline-flex items-center gap-1 self-start text-xs font-medium text-ink/50 hover:text-red-600"
-                >
-                  <X size={13} />
-                  Quitar logo
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setShowUrlField((v) => !v)}
-                  className="inline-flex items-center gap-1 self-start text-xs font-medium text-ink/50 hover:text-ink"
-                >
-                  <Link2 size={13} />
-                  Usar un enlace en su lugar
-                </button>
-              )}
-            </div>
+                />
+              </div>
+            )}
           </div>
 
-          {showUrlField && !logo.trim() && (
-            <div className="mt-3">
-              <Input
-                label="Enlace del logo (URL)"
-                type="url"
-                placeholder="https://ejemplo.com/mi-logo.jpg"
-                value={logo}
-                onChange={(e) => {
-                  setLogo(e.target.value);
-                  setLogoBlob(null);
-                }}
-              />
-            </div>
-          )}
+          <div>
+            <span className="mb-2 block text-sm font-medium text-ink">Ubicación</span>
+            <button type="button" onClick={handleUseLocation} disabled={locating} className={outlineViolet}>
+              {locating ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : latitude != null ? (
+                <Check size={16} />
+              ) : (
+                <MapPin size={16} />
+              )}
+              {locating
+                ? 'Obteniendo ubicación…'
+                : latitude != null
+                  ? 'Ubicación guardada · actualizar'
+                  : 'Usar mi ubicación actual'}
+            </button>
+            {locationError && <p className="mt-2 text-xs text-red-600">{locationError}</p>}
+            <p className="mt-2 text-xs text-ink/50">Opcional. Facilita que te encuentren cerca.</p>
+          </div>
 
-          <p className="mt-2 text-xs text-ink/40">Opcional. Puedes agregarlo o cambiarlo después.</p>
-        </div>
-
-        <div>
-          <span className="mb-1.5 block text-sm font-medium text-ink">Ubicación</span>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            icon={<MapPin size={14} />}
-            onClick={handleUseLocation}
-            disabled={locating}
+          <Select
+            label="Categoría"
+            value={category}
+            onChange={(e) => setCategory(e.target.value as ProductCategory)}
+            className={category ? '' : 'text-ink/40'}
           >
-            {locating
-              ? 'Obteniendo ubicación…'
-              : latitude != null
-                ? 'Actualizar mi ubicación'
-                : 'Usar mi ubicación actual'}
-          </Button>
-          {latitude != null && longitude != null && (
-            <p className="mt-2 text-xs text-primary">Ubicación guardada ✓</p>
-          )}
-          {locationError && <p className="mt-2 text-xs text-red-600">{locationError}</p>}
-          <p className="mt-2 text-xs text-ink/40">
-            Opcional. Ayuda a que los compradores cercanos te encuentren más fácil. Puedes
-            agregarla o cambiarla después.
-          </p>
-        </div>
-
-        <Select label="Categoría" value={category} onChange={(e) => setCategory(e.target.value as ProductCategory)}>
-          {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
-            <option key={key} value={key}>
-              {label}
+            <option value="" disabled>
+              Selecciona una categoría
             </option>
-          ))}
-        </Select>
-        <Textarea
-          label="Descripción"
-          placeholder="¿Qué ofreces y qué te hace especial?"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          required
-        />
-        <p className="-mt-2 text-xs text-ink/40">
-          No incluyas WhatsApp, redes sociales ni número de teléfono — usa el chat de UniHub para coordinar con los compradores.
-        </p>
+            {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
+              <option key={key} value={key} className="text-ink">
+                {label}
+              </option>
+            ))}
+          </Select>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+          <Textarea
+            label="Descripción"
+            placeholder="¿Qué ofreces y qué te hace especial?"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            required
+          />
+          <p className="-mt-3 text-xs text-ink/50">
+            No incluyas WhatsApp, redes ni teléfono: coordina con tus compradores por el chat de UniHub.
+          </p>
 
-        <Button type="submit" size="lg" fullWidth loading={loading}>
-          Crear emprendimiento
-        </Button>
-      </form>
+          <div className="flex items-center gap-2 text-sm text-ink/70">
+            <Info size={17} className="shrink-0 text-ink/50" />
+            <span>
+              Tu emprendimiento empezará como <strong className="text-ink">no verificado</strong>.
+            </span>
+          </div>
+
+          {error && <p className="text-sm text-red-600">{error}</p>}
+
+          <Button type="submit" size="lg" fullWidth loading={loading} className="rounded-2xl font-semibold">
+            Crear mi emprendimiento
+            {!loading && <ArrowRight size={18} />}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }
