@@ -1,0 +1,271 @@
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, ShoppingBag, MapPin, MessageCircle } from 'lucide-react';
+import type { Product, ProductVariant } from '../types';
+import { CATEGORY_LABELS } from '../types';
+import { productService } from '../services/productService';
+import { chatService } from '../services/chatService';
+import { formatCOP } from '../utils/format';
+import { isProductOnSale, getDiscountedPrice } from '../utils/discount';
+import { hasVariants, isProductSoldOut } from '../utils/variants';
+import { ProductImage } from '../components/ProductImage';
+import { VerifiedBadge } from '../components/VerifiedBadge';
+import { StarRating } from '../components/StarRating';
+import { Button } from '../components/Button';
+import { PurchaseModal } from '../components/PurchaseModal';
+import { RowSkeleton, ErrorState } from '../components/StateViews';
+import { useAuth } from '../hooks/useAuth';
+
+export function ProductDetail() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { profile } = useAuth();
+
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [chatLoading, setChatLoading] = useState(false);
+  const [showPurchase, setShowPurchase] = useState(false);
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
+
+  const load = async () => {
+    if (!id) return;
+    setLoading(true);
+    setError(false);
+    try {
+      const data = await productService.getById(id);
+      setProduct(data);
+      // Si solo hay una variante, no tiene sentido obligar a elegirla.
+      setSelectedVariant(data?.variants?.length === 1 ? data.variants[0] : null);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="px-4 pt-4 md:px-6 md:pt-6">
+        <RowSkeleton count={1} />
+        <div className="mt-4">
+          <RowSkeleton count={4} />
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !product) {
+    return <ErrorState onRetry={load} />;
+  }
+
+  const business = product.business;
+  const productHasVariants = hasVariants(product);
+  const onSale = isProductOnSale(product) && !productHasVariants;
+  const soldOut = isProductSoldOut(product);
+  // Con variantes, el precio/stock a mostrar dependen de la que se eligió.
+  const finalPrice = productHasVariants
+    ? selectedVariant?.price ?? null
+    : onSale
+      ? getDiscountedPrice(product)
+      : product.price;
+  const canBuy = product.available && (!productHasVariants || Boolean(selectedVariant && selectedVariant.stock > 0));
+  const isOwnBusiness = business && profile?.id === business.owner_id;
+
+  const handleChat = async () => {
+    if (!business) return;
+    if (!profile) {
+      navigate('/login');
+      return;
+    }
+    setChatLoading(true);
+    const { conversation, error: chatError } = await chatService.getOrCreate(profile.id, business.id);
+    setChatLoading(false);
+    if (chatError || !conversation) return;
+    navigate(`/messages/${conversation.id}`);
+  };
+
+  return (
+    <div className="pb-28 md:pb-10">
+      <div className="px-4 pt-4 md:px-0 md:pt-0">
+      <div className="relative overflow-hidden rounded-[30px] md:rounded-none">
+        <ProductImage
+          src={product.image}
+          category={product.category}
+          className="aspect-[5/4] w-full md:aspect-[21/9]"
+          iconSize={44}
+          alt={product.name}
+          name={product.name}
+          seedKey={product.id}
+        />
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute left-3.5 top-3.5 flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink shadow-card"
+          aria-label="Volver"
+        >
+          <ArrowLeft size={19} />
+        </button>
+        {soldOut && (
+          <span className="absolute right-4 top-4 rounded-full bg-ink px-3 py-1 text-xs font-medium text-white">
+            Agotado
+          </span>
+        )}
+        {onSale && (
+          <span className="absolute bottom-4 left-4 rounded-xl bg-accent px-3 py-1.5 text-sm font-bold text-ink shadow-card">
+            -{product.discount_percent}%
+          </span>
+        )}
+      </div>
+      </div>
+
+      <div className="px-4 pt-4 md:px-6 md:max-w-2xl md:mx-auto">
+        <div className="flex flex-wrap items-center gap-2">
+          {typeof business?.available_now === 'boolean' && (
+            <span
+              className={`inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-xs font-semibold ${
+                business.available_now ? 'bg-green-100 text-green-800' : 'bg-ink/8 text-ink/60'
+              }`}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${business.available_now ? 'bg-green-600' : 'bg-ink/30'}`} />
+              {business.available_now ? 'Disponible ahora' : 'No disponible ahora'}
+            </span>
+          )}
+          <span className="inline-flex h-7 items-center rounded-full bg-primary-light px-3 text-xs font-semibold text-primary">
+            {CATEGORY_LABELS[product.category]}
+          </span>
+        </div>
+        <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight text-ink">{product.name}</h1>
+
+        <p className="mt-4 text-sm leading-relaxed text-ink/70">{product.description}</p>
+
+        {productHasVariants ? (
+          <div className="mt-4">
+            <p className="mb-2 text-sm font-medium text-ink">Elige una opción</p>
+            <div className="flex flex-wrap gap-2">
+              {product.variants!.map((v) => {
+                const active = selectedVariant?.id === v.id;
+                const outOfStock = v.stock <= 0;
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    disabled={outOfStock}
+                    onClick={() => setSelectedVariant(v)}
+                    className={`rounded-full border px-3.5 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                      active
+                        ? 'border-primary bg-primary text-white'
+                        : 'border-ink/15 bg-white text-ink hover:border-primary/50'
+                    }`}
+                  >
+                    {v.name} · {formatCOP(v.price)}
+                    {outOfStock && ' (agotado)'}
+                  </button>
+                );
+              })}
+            </div>
+            {selectedVariant && (
+              <p className="mt-2 text-xs text-ink/50">
+                {selectedVariant.stock > 0 ? `${selectedVariant.stock} disponibles` : 'Sin stock'}
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="mt-3 flex items-center gap-3 text-xs text-ink/50">
+            <span>{product.available ? `${product.stock} disponibles` : 'Sin stock'}</span>
+          </div>
+        )}
+
+        {business && (
+          <div className="mt-5 flex flex-col gap-3">
+            <div className="flex items-center gap-3 rounded-card border border-ink/8 bg-white p-3.5 shadow-card">
+              <button
+                onClick={() => navigate(`/business/${business.id}`)}
+                className="flex min-w-0 flex-1 items-center gap-3 text-left"
+              >
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control bg-primary-light text-primary">
+                  <ShoppingBag size={18} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-semibold text-ink truncate">{business.name}</span>
+                    {business.verified && <VerifiedBadge compact />}
+                  </div>
+                  <div className="mt-0.5 flex items-center gap-2">
+                    <StarRating rating={business.rating} size={12} reviewCount={business.review_count} />
+                  </div>
+                  <p className="mt-0.5 flex items-center gap-1 text-[11px] text-ink/40">
+                    <MapPin size={11} />
+                    {business.university_name} · {business.faculty_name}
+                  </p>
+                </div>
+              </button>
+
+              {!isOwnBusiness && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  icon={<MessageCircle size={14} />}
+                  loading={chatLoading}
+                  onClick={handleChat}
+                  className="shrink-0"
+                >
+                  Chatear
+                </Button>
+              )}
+            </div>
+
+            <div className="flex items-start gap-2.5 rounded-card border border-ink/8 bg-white p-3.5 shadow-card">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-control bg-secondary-light text-secondary">
+                <MapPin size={16} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-ink">Punto de encuentro</p>
+                <p className="mt-0.5 text-xs text-ink/50">Lo acuerdas por chat con el emprendedor</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-4 border-t border-ink/8 bg-white px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 md:static md:mt-6 md:border-0 md:px-6 md:max-w-2xl md:mx-auto">
+        <div className="shrink-0">
+          {onSale && <p className="text-xs leading-none text-ink/40 line-through">{formatCOP(product.price)}</p>}
+          <p className="text-2xl font-extrabold leading-tight tracking-tight text-primary">
+            {finalPrice != null ? formatCOP(finalPrice) : 'Elige una opción'}
+          </p>
+        </div>
+        <Button
+          size="lg"
+          fullWidth
+          disabled={!canBuy}
+          onClick={() => {
+            if (!profile) {
+              navigate('/login');
+              return;
+            }
+            setShowPurchase(true);
+          }}
+        >
+          {!product.available ? 'No disponible' : productHasVariants && !selectedVariant ? 'Elige una opción' : canBuy ? 'Comprar' : 'Agotado'}
+        </Button>
+      </div>
+
+      {showPurchase && (
+        <PurchaseModal
+          product={product}
+          variant={selectedVariant}
+          onClose={() => {
+            setShowPurchase(false);
+            load();
+          }}
+        />
+      )}
+    </div>
+  );
+}

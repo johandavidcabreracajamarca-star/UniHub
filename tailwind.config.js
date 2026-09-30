@@ -5,28 +5,29 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#3F5A3A', // Verde musgo — identidad "Tinto y Papel" (remix con verde de primario)
-          dark: '#2A3E27',
-          light: '#DEE6D8',
+          DEFAULT: '#6941D9', // Violeta — color principal: botones y elementos de marca
+          dark: '#5230B8',
+          light: '#EDE6FC', // Lila claro — tarjetas, secciones y fondos secundarios
         },
         secondary: {
-          DEFAULT: '#4A2E22', // Café tostado — distingue elementos como "verificado" sin competir con el primario
-          light: '#E8DFD3',
+          DEFAULT: '#242033', // Tinta — fondos oscuros y botones secundarios
+          light: '#E4DDF5',
         },
         accent: {
-          DEFAULT: '#B1502B', // Ladrillo/cobre — resalta datos clave (precios, calificaciones, CTAs secundarios)
-          light: '#F0D2C0',
+          DEFAULT: '#FF806C', // Coral — acentos, promociones y detalles del logo (usar texto oscuro encima, no blanco)
+          dark: '#C2412D', // Coral oscuro — para TEXTO coral sobre fondos claros (el coral normal no se lee)
+          light: '#FFE6E1',
         },
-        surface: '#EDEAE3', // Papel/piedra clara — fondos neutros
-        ink: '#2A2320', // Texto — café oscuro, cálido y con buena legibilidad
+        surface: '#FAF8F5', // Blanco cálido — fondo principal
+        ink: '#242033', // Tinta — texto y títulos
       },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         serif: ['Fraunces', 'ui-serif', 'Georgia', 'serif'],
       },
       boxShadow: {
-        card: '0 1px 2px 0 rgba(63, 90, 58, 0.05), 0 1px 3px 0 rgba(63, 90, 58, 0.08)',
-        'card-hover': '0 4px 12px 0 rgba(63, 90, 58, 0.10)',
+        card: '0 1px 2px 0 rgba(36, 32, 51, 0.05), 0 1px 3px 0 rgba(36, 32, 51, 0.08)',
+        'card-hover': '0 4px 12px 0 rgba(105, 65, 217, 0.14)',
       },
       borderRadius: {
         card: '24px',
