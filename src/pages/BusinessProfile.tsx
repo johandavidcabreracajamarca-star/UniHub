@@ -8,7 +8,6 @@ import { productService } from '../services/productService';
 import { reviewService } from '../services/reviewService';
 import { chatService } from '../services/chatService';
 import { useAuth } from '../hooks/useAuth';
-import { ImagePlaceholder } from '../components/ImagePlaceholder';
 import { VerifiedBadge } from '../components/VerifiedBadge';
 import { StarRating } from '../components/StarRating';
 import { ProductCard } from '../components/ProductCard';
@@ -26,6 +25,8 @@ export function BusinessProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [askingLoading, setAskingLoading] = useState(false);
+  const [logoFailed, setLogoFailed] = useState(false);
+  const [coverFailed, setCoverFailed] = useState(false);
 
   const load = async () => {
     if (!id) return;
@@ -74,11 +75,27 @@ export function BusinessProfile() {
   }
 
   const isOwnBusiness = profile?.id === business.owner_id;
+  const logoUrl = !logoFailed && business.logo?.trim() ? business.logo : null;
+  const coverUrl = !coverFailed && business.cover_image?.trim() ? business.cover_image : null;
+  const initial = business.name.trim().charAt(0).toUpperCase() || 'U';
 
   return (
     <div className="pb-10">
       <div className="relative">
-        <ImagePlaceholder category={business.category} className="h-40 w-full md:h-56" iconSize={32} />
+        {coverUrl ? (
+          <img
+            src={coverUrl}
+            alt=""
+            onError={() => setCoverFailed(true)}
+            className="h-40 w-full object-cover md:h-56"
+          />
+        ) : (
+          <div className="relative h-40 w-full overflow-hidden bg-primary md:h-56">
+            <div className="absolute -right-10 -top-12 h-44 w-44 rounded-full bg-white/[0.08]" />
+            <div className="absolute right-16 top-20 h-20 w-20 rounded-full bg-accent/90" />
+            <div className="absolute -left-8 bottom-[-60px] h-36 w-36 rounded-full bg-white/[0.06]" />
+          </div>
+        )}
         <button
           onClick={() => navigate(-1)}
           className="absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-ink shadow-card"
@@ -89,9 +106,18 @@ export function BusinessProfile() {
       </div>
 
       <div className="relative px-4 md:px-6 md:max-w-3xl md:mx-auto">
-        <div className="-mt-8 flex items-end justify-between gap-3">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-4 border-surface bg-white shadow-card">
-            <ImagePlaceholder category={business.category} className="h-full w-full rounded-xl" iconSize={22} />
+        <div className="-mt-10 flex items-end justify-between gap-3">
+          <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-4 border-surface bg-primary-light shadow-card">
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={`Logo de ${business.name}`}
+                onError={() => setLogoFailed(true)}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <span className="font-serif text-3xl font-semibold text-primary">{initial}</span>
+            )}
           </div>
 
           {!isOwnBusiness && (
@@ -107,7 +133,7 @@ export function BusinessProfile() {
         </div>
 
         <div className="mt-3 flex items-center gap-2">
-          <h1 className="text-xl font-bold text-ink">{business.name}</h1>
+          <h1 className="font-serif text-2xl font-semibold tracking-tight text-ink">{business.name}</h1>
           {business.verified && <VerifiedBadge />}
         </div>
 
