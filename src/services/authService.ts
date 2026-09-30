@@ -176,12 +176,16 @@ export const authService = {
     if (isSupabaseConfigured && supabase) {
       const { data: authData } = await supabase.auth.getUser();
       if (!authData.user) return null;
+      // La columna "email" de profiles NO es legible desde la app (para que
+      // nadie pueda descargar los correos de los demás usuarios). El correo
+      // propio se toma de la sesión de Supabase Auth.
       const { data } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, full_name, university_id, faculty_id, role, created_at')
         .eq('id', authData.user.id)
         .single();
-      return (data as Profile) ?? null;
+      if (!data) return null;
+      return { ...(data as Omit<Profile, 'email'>), email: authData.user.email ?? '' };
     }
 
     const raw = localStorage.getItem(DEMO_SESSION_KEY);

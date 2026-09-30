@@ -40,7 +40,7 @@ export const orderService = {
     if (isSupabaseConfigured && supabase) {
       const { data } = await supabase
         .from('orders')
-        .select('*, items:order_items(*, product:products(*)), buyer:profiles(*)')
+        .select('*, items:order_items(*, product:products(*)), buyer:profiles(id, full_name)')
         .eq('business_id', businessId)
         .order('created_at', { ascending: false });
       return (data as Order[]) ?? [];
