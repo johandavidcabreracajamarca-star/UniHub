@@ -63,16 +63,14 @@ export function ProfilePage() {
       {!loadingBusiness && !hasBusiness && !isAdmin && (
         <button
           onClick={() => navigate('/dashboard')}
-          className="mt-6 flex w-full items-center gap-3 rounded-card-lg p-4 text-left shadow-card transition-opacity hover:opacity-90"
-          style={{ backgroundColor: '#F0D2C0' }}
+          className="mt-6 flex w-full items-center gap-3 rounded-card-lg bg-accent-light p-4 text-left shadow-card transition-opacity hover:opacity-90"
         >
           <span
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white"
-            style={{ backgroundColor: '#B1502B' }}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-ink"
           >
             <Rocket size={18} />
           </span>
-          <span className="text-sm font-semibold" style={{ color: '#712B13' }}>
+          <span className="text-sm font-semibold text-ink">
             Crea tu negocio y empieza a vender
           </span>
         </button>
@@ -104,7 +102,7 @@ export function ProfilePage() {
       <button
         onClick={handleLogout}
         disabled={loggingOut}
-        className="mt-6 flex w-full items-center justify-center gap-2 rounded-card-lg border border-ink/8 bg-white p-4 text-sm font-semibold text-accent shadow-card transition-colors hover:bg-accent-light disabled:opacity-60"
+        className="mt-6 flex w-full items-center justify-center gap-2 rounded-card-lg border border-ink/8 bg-white p-4 text-sm font-semibold text-red-600 shadow-card transition-colors hover:bg-accent-light disabled:opacity-60"
       >
         <LogOut size={16} />
         {loggingOut ? 'Cerrando sesión…' : 'Cerrar sesión'}

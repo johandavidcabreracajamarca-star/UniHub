@@ -25,7 +25,7 @@ export function Welcome() {
   return (
     <div
       className="flex min-h-screen flex-col bg-surface"
-      style={{ backgroundImage: 'radial-gradient(700px 320px at 50% 0%, rgba(63,90,58,0.16), transparent 70%)' }}
+      style={{ backgroundImage: 'radial-gradient(700px 320px at 50% 0%, rgba(105,65,217,0.16), transparent 70%)' }}
     >
       <div className="flex flex-1 flex-col items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm">

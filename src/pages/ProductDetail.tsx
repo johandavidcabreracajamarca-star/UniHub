@@ -116,7 +116,7 @@ export function ProductDetail() {
           </span>
         )}
         {onSale && (
-          <span className="absolute bottom-4 left-4 rounded-xl bg-accent px-3 py-1.5 text-sm font-bold text-white shadow-card">
+          <span className="absolute bottom-4 left-4 rounded-xl bg-accent px-3 py-1.5 text-sm font-bold text-ink shadow-card">
             -{product.discount_percent}%
           </span>
         )}
@@ -236,7 +236,7 @@ export function ProductDetail() {
       <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-4 border-t border-ink/8 bg-white px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 md:static md:mt-6 md:border-0 md:px-6 md:max-w-2xl md:mx-auto">
         <div className="shrink-0">
           {onSale && <p className="text-xs leading-none text-ink/40 line-through">{formatCOP(product.price)}</p>}
-          <p className="text-2xl font-extrabold leading-tight tracking-tight text-accent">
+          <p className="text-2xl font-extrabold leading-tight tracking-tight text-primary">
             {finalPrice != null ? formatCOP(finalPrice) : 'Elige una opción'}
           </p>
         </div>
