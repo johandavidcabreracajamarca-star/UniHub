@@ -14,7 +14,7 @@
 // sube el número de CACHE_NAME (v1 -> v2, etc.).
 // ============================================================================
 
-const CACHE_NAME = 'unihub-cache-v2';
+const CACHE_NAME = 'unihub-cache-v4';
 const APP_SHELL = ['/', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png'];
 
 // Si la red tarda más que esto, dejamos de esperarla y usamos lo que haya en
