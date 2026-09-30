@@ -20,7 +20,7 @@ export function BottomNav() {
       aria-label="Navegación principal"
       className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] md:hidden"
     >
-      <div className="pointer-events-auto flex w-full max-w-[19rem] items-center justify-between rounded-full bg-ink p-2 shadow-[0_14px_30px_rgba(42,35,32,0.32)]">
+      <div className="pointer-events-auto flex w-full max-w-[19rem] items-center justify-between rounded-full bg-ink p-2 shadow-[0_14px_30px_rgba(36,32,51,0.32)]">
         {items.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}

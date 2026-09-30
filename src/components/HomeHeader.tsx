@@ -17,7 +17,7 @@ export function HomeHeader() {
 
       <div className="relative flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <BrandMark size={36} className="rounded-[22%] ring-1 ring-white/25" />
+          <BrandMark size={34} variant="light" />
           <span className="font-serif text-[22px] font-bold tracking-tight">UniHub</span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -42,7 +42,7 @@ export function HomeHeader() {
 
       <button
         onClick={() => navigate('/search')}
-        className="relative mt-4 flex min-h-[50px] w-full items-center gap-2.5 rounded-2xl bg-white px-4 text-left text-[15px] text-ink/50 shadow-[0_8px_20px_rgba(20,32,18,0.25)]"
+        className="relative mt-4 flex min-h-[50px] w-full items-center gap-2.5 rounded-2xl bg-white px-4 text-left text-[15px] text-ink/50 shadow-[0_8px_20px_rgba(36,32,51,0.25)]"
       >
         <Search size={18} />
         ¿Qué estás buscando?

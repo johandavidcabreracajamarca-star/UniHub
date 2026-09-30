@@ -2,7 +2,7 @@ import type { OrderStatus } from '../types';
 import { ORDER_STATUS_LABELS } from '../types';
 
 const STATUS_STYLES: Record<OrderStatus, string> = {
-  pendiente: 'bg-accent-light text-accent',
+  pendiente: 'bg-accent-light text-accent-dark',
   confirmado: 'bg-secondary-light text-secondary',
   en_preparacion: 'bg-secondary-light text-secondary',
   completado: 'bg-primary-light text-primary-dark',

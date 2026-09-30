@@ -46,7 +46,7 @@ export function ProductCard({
           </div>
         )}
         {!soldOut && onSale && !variantRange && (
-          <span className="absolute left-0 top-3 rounded-r-xl bg-accent py-1 pl-2.5 pr-3 text-xs font-bold text-white shadow-card">
+          <span className="absolute left-0 top-3 rounded-r-xl bg-accent py-1 pl-2.5 pr-3 text-xs font-bold text-ink shadow-card">
             -{product.discount_percent}%
           </span>
         )}
@@ -90,7 +90,7 @@ export function ProductCard({
             )}
           </div>
           <span
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-white transition-all duration-200 group-hover:scale-110 group-active:scale-95"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-white transition-all duration-200 group-hover:scale-110 group-active:scale-95"
             aria-label="Comprar"
           >
             <Plus size={18} strokeWidth={2.4} />

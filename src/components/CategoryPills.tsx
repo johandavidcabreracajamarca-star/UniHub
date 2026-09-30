@@ -14,9 +14,9 @@ const CATEGORY_ICONS: Record<ProductCategory, typeof Utensils> = {
 // Color de cada categoría cuando NO está seleccionada (paleta de la marca).
 const CATEGORY_TONES: Record<ProductCategory, string> = {
   comida: 'bg-secondary-light text-secondary',
-  ropa: 'bg-accent-light text-accent',
+  ropa: 'bg-accent-light text-accent-dark',
   tecnologia: 'bg-primary-light text-primary',
-  accesorios: 'bg-secondary-light text-accent',
+  accesorios: 'bg-secondary-light text-secondary',
   servicios: 'bg-ink/10 text-ink',
   otros: 'bg-white text-ink/60',
 };
