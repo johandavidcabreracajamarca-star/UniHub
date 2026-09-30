@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
-import { Package, ClipboardList, DollarSign, Star, MapPin, Camera, Loader2, Circle } from 'lucide-react';
+import { Package, ClipboardList, DollarSign, Star, MapPin, Camera, Loader2, Circle, Pencil } from 'lucide-react';
 import { useMyBusiness } from '../../hooks/useMyBusiness';
 import { CreateBusinessForm } from './CreateBusinessForm';
 import { productService } from '../../services/productService';
@@ -13,10 +13,16 @@ import { RowSkeleton } from '../../components/StateViews';
 import { Button } from '../../components/Button';
 import { formatCOP } from '../../utils/format';
 import { processUploadedImage } from '../../utils/imageUpload';
+import { containsContactInfo } from '../../utils/contactFilter';
+import { Input, Select, Textarea } from '../../components/Input';
+import { CATEGORY_LABELS } from '../../types';
+import type { ProductCategory } from '../../types';
+import { useToast } from '../../hooks/useToast';
 
 export function DashboardHome() {
   const { profile } = useAuth();
   const { business, loading, refresh } = useMyBusiness();
+  const { showToast } = useToast();
   const [stats, setStats] = useState<{
     activeProducts: number;
     totalOrders: number;
@@ -27,6 +33,50 @@ export function DashboardHome() {
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoError, setLogoError] = useState<string | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
+
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editCategory, setEditCategory] = useState<ProductCategory>('otros');
+  const [savingInfo, setSavingInfo] = useState(false);
+  const [infoError, setInfoError] = useState<string | null>(null);
+
+  const startEditing = () => {
+    if (!business) return;
+    setEditName(business.name);
+    setEditDescription(business.description ?? '');
+    setEditCategory(business.category);
+    setInfoError(null);
+    setEditing(true);
+  };
+
+  const handleSaveInfo = async () => {
+    if (!business) return;
+    if (!editName.trim() || !editDescription.trim()) {
+      setInfoError('Completa el nombre y la descripción.');
+      return;
+    }
+    const contactIssue = containsContactInfo(editDescription) || containsContactInfo(editName);
+    if (contactIssue) {
+      setInfoError(contactIssue);
+      return;
+    }
+    setSavingInfo(true);
+    setInfoError(null);
+    const { error } = await businessService.updateInfo(business.id, {
+      name: editName,
+      description: editDescription,
+      category: editCategory,
+    });
+    setSavingInfo(false);
+    if (error) {
+      setInfoError(error);
+      return;
+    }
+    setEditing(false);
+    showToast('Información actualizada');
+    refresh();
+  };
 
   const [availabilityNote, setAvailabilityNote] = useState('');
   const [savingAvailability, setSavingAvailability] = useState(false);
@@ -217,6 +267,66 @@ export function DashboardHome() {
           {business.logo?.trim() ? 'Cambiar logo' : 'Agregar logo'}
         </button>
         {logoError && <p className="mt-1 text-xs text-red-600">{logoError}</p>}
+
+        {!editing ? (
+          <div className="mt-3 border-t border-ink/8 pt-3">
+            {business.description?.trim() && (
+              <p className="text-sm leading-relaxed text-ink/70">{business.description}</p>
+            )}
+            <p className="mt-1 text-xs text-ink/50">Categoría: {CATEGORY_LABELS[business.category]}</p>
+            <button
+              type="button"
+              onClick={startEditing}
+              className="mt-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl border-[1.5px] border-primary bg-white px-4 text-sm font-semibold text-primary transition-all hover:bg-primary-light active:scale-[0.98]"
+            >
+              <Pencil size={15} />
+              Editar información
+            </button>
+          </div>
+        ) : (
+          <div className="mt-3 flex flex-col gap-4 border-t border-ink/8 pt-4">
+            <Input
+              label="Nombre del emprendimiento"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              maxLength={60}
+            />
+            <Select
+              label="Categoría"
+              value={editCategory}
+              onChange={(e) => setEditCategory(e.target.value as ProductCategory)}
+            >
+              {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ))}
+            </Select>
+            <Textarea
+              label="Descripción"
+              value={editDescription}
+              onChange={(e) => setEditDescription(e.target.value)}
+            />
+            <p className="-mt-3 text-xs text-ink/50">
+              No incluyas WhatsApp, redes ni teléfono: coordina por el chat de UniHub.
+            </p>
+            {infoError && <p className="text-sm text-red-600">{infoError}</p>}
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                fullWidth
+                onClick={() => setEditing(false)}
+                disabled={savingInfo}
+              >
+                Cancelar
+              </Button>
+              <Button type="button" fullWidth loading={savingInfo} onClick={handleSaveInfo}>
+                Guardar cambios
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="mt-4 rounded-card border border-ink/8 bg-white p-3.5 shadow-card">
