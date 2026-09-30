@@ -13,6 +13,13 @@ function enrich(business: Business): Business {
   };
 }
 
+// Datos básicos que el dueño puede editar después de crear su emprendimiento.
+export interface BusinessInfoInput {
+  name: string;
+  description: string;
+  category: ProductCategory;
+}
+
 interface BusinessRow extends Business {
   universities?: { name: string } | null;
   faculties?: { name: string } | null;
@@ -183,6 +190,29 @@ export const businessService = {
       available_now: availableNow,
       availability_note: availabilityNote,
     };
+    demoDb.saveBusinesses(businesses);
+    return { error: null };
+  },
+
+  // El dueño edita nombre, descripción y categoría. Igual que logo/ubicación,
+  // lo cubre la política businesses_update_own: no hace falta SQL nuevo.
+  async updateInfo(id: string, info: BusinessInfoInput): Promise<{ error: string | null }> {
+    const name = info.name.trim();
+    const description = info.description.trim();
+    if (!name || !description) {
+      return { error: 'El nombre y la descripción no pueden quedar vacíos.' };
+    }
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('businesses')
+        .update({ name, description, category: info.category })
+        .eq('id', id);
+      return { error: error ? error.message : null };
+    }
+    const businesses = demoDb.getBusinesses();
+    const idx = businesses.findIndex((b) => b.id === id);
+    if (idx === -1) return { error: 'Emprendimiento no encontrado.' };
+    businesses[idx] = { ...businesses[idx], name, description, category: info.category };
     demoDb.saveBusinesses(businesses);
     return { error: null };
   },
