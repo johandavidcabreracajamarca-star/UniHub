@@ -38,6 +38,15 @@ export default {
         app: '480px',
         desktop: '1200px',
       },
+      keyframes: {
+        'fade-up': {
+          from: { opacity: '0', transform: 'translateY(8px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        'fade-up': 'fade-up 250ms ease-out',
+      },
     },
   },
   plugins: [],

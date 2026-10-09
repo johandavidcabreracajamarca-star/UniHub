@@ -24,7 +24,11 @@ export const reviewService = {
         .select('*, profiles(full_name)')
         .eq('business_id', businessId)
         .order('created_at', { ascending: false });
-      return (data as Review[]) ?? [];
+      type Row = Review & { profiles?: { full_name?: string } | null };
+      return ((data as Row[]) ?? []).map(({ profiles, ...r }) => ({
+        ...r,
+        buyer_name: r.buyer_name ?? profiles?.full_name ?? undefined,
+      }));
     }
     return demoDb
       .getReviews()

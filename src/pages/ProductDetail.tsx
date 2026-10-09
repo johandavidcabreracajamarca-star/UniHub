@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, ShoppingBag, MapPin, MessageCircle } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, MapPin, MessageCircle, Share2 } from 'lucide-react';
 import type { Product, ProductVariant } from '../types';
 import { CATEGORY_LABELS } from '../types';
 import { productService } from '../services/productService';
@@ -15,6 +15,8 @@ import { Button } from '../components/Button';
 import { PurchaseModal } from '../components/PurchaseModal';
 import { RowSkeleton, ErrorState } from '../components/StateViews';
 import { useAuth } from '../hooks/useAuth';
+import { ProductExtras } from '../components/ProductExtras';
+import { shareLink } from '../utils/share';
 
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -77,6 +79,15 @@ export function ProductDetail() {
   const canBuy = product.available && (!productHasVariants || Boolean(selectedVariant && selectedVariant.stock > 0));
   const isOwnBusiness = business && profile?.id === business.owner_id;
 
+  const handleShare = () => {
+    const price = finalPrice != null ? ` por ${formatCOP(finalPrice)}` : '';
+    shareLink({
+      title: product.name,
+      text: `Mira ${product.name}${price}${business ? ` de ${business.name}` : ''} en UniHub 👀`,
+      path: `/product/${product.id}`,
+    });
+  };
+
   const handleChat = async () => {
     if (!business) return;
     if (!profile) {
@@ -91,7 +102,8 @@ export function ProductDetail() {
   };
 
   return (
-    <div className="pb-28 md:grid md:grid-cols-2 md:items-start md:gap-10 md:px-6 md:pb-10 md:pt-6">
+    <div className="pb-28 md:pb-10">
+      <div className="md:grid md:grid-cols-2 md:items-start md:gap-10 md:px-6 md:pt-6">
       <div className="px-4 pt-4 md:sticky md:top-24 md:px-0 md:pt-0">
       <div className="relative overflow-hidden rounded-[30px]">
         <ProductImage
@@ -110,8 +122,15 @@ export function ProductDetail() {
         >
           <ArrowLeft size={19} />
         </button>
+        <button
+          onClick={handleShare}
+          className="absolute right-3.5 top-3.5 flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink shadow-card transition-transform active:scale-90"
+          aria-label="Compartir producto"
+        >
+          <Share2 size={18} />
+        </button>
         {soldOut && (
-          <span className="absolute right-4 top-4 rounded-full bg-ink px-3 py-1 text-xs font-medium text-white">
+          <span className="absolute bottom-4 right-4 rounded-full bg-ink px-3 py-1 text-xs font-medium text-white">
             Agotado
           </span>
         )}
@@ -257,6 +276,9 @@ export function ProductDetail() {
         </Button>
       </div>
       </div>
+      </div>
+
+      {business && <ProductExtras business={business} productId={product.id} />}
 
       {showPurchase && (
         <PurchaseModal

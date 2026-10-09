@@ -9,6 +9,15 @@ import { ProductCard } from '../components/ProductCard';
 import { BusinessCard } from '../components/BusinessCard';
 import { ProductGridSkeleton, EmptyState, ErrorState } from '../components/StateViews';
 import { PackageSearch } from 'lucide-react';
+import { InstallBanner } from '../components/InstallBanner';
+
+// Destacados: mejor calificados (con suficientes reseñas para confiar en el
+// promedio) y con un empujón a los recién llegados para que también se vean.
+function featuredScore(b: Business): number {
+  const confidence = Math.min(b.review_count ?? 0, 10) / 10;
+  const isNew = Date.now() - new Date(b.created_at).getTime() < 14 * 24 * 60 * 60 * 1000;
+  return (b.rating ?? 0) * confidence + (isNew ? 2.5 : 0) + (b.available_now ? 0.5 : 0);
+}
 
 export function Explore() {
   const [category, setCategory] = useState<ProductCategory | 'todas'>('todas');
@@ -27,7 +36,7 @@ export function Explore() {
         businessService.listVerified(),
       ]);
       setProducts(p);
-      setBusinesses(b);
+      setBusinesses([...b].sort((x, y) => featuredScore(y) - featuredScore(x)).slice(0, 10));
     } catch {
       setError(true);
     } finally {
@@ -49,13 +58,18 @@ export function Explore() {
         <p className="mt-1 text-sm text-ink/50">Descubre lo que ofrece tu comunidad universitaria.</p>
       </div>
 
+      <InstallBanner />
+
       <div className="mt-5 md:mt-5">
         <CategoryPills selected={category} onSelect={setCategory} />
       </div>
 
       {businesses.length > 0 && (
         <section className="mt-7 px-4 md:px-6">
-          <h2 className="mb-3 text-lg font-bold tracking-tight text-ink">Emprendimientos destacados</h2>
+          <div className="mb-3">
+            <h2 className="text-lg font-bold tracking-tight text-ink">Destacados de la semana</h2>
+            <p className="text-xs text-ink/50">Los mejor calificados y los nuevos en la U</p>
+          </div>
           <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-none">
             {businesses.map((b) => (
               <BusinessCard key={b.id} business={b} />

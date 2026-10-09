@@ -7,6 +7,7 @@ import { Input } from '../components/Input';
 import { authService } from '../services/authService';
 import { useAuth } from '../hooks/useAuth';
 import { isSupabaseConfigured } from '../lib/supabaseClient';
+import { consumeRedirect } from '../utils/redirect';
 
 export function Login() {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ export function Login() {
       return;
     }
     await refresh();
-    navigate('/explore');
+    navigate(consumeRedirect());
   };
 
   const handleResend = async () => {

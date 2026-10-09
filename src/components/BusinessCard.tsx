@@ -66,6 +66,11 @@ export function BusinessCard({ business }: { business: Business }) {
         ) : (
           <ImagePlaceholder category={business.category} className="h-24 w-full" iconSize={22} />
         )}
+        {Date.now() - new Date(business.created_at).getTime() < 14 * 24 * 60 * 60 * 1000 && (
+          <span className="absolute left-0 top-2.5 rounded-r-lg bg-accent py-0.5 pl-2 pr-2.5 text-[11px] font-bold text-ink shadow-card">
+            Nuevo
+          </span>
+        )}
         <span
           role="button"
           onClick={toggleFavorite}

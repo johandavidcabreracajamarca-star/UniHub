@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { BottomNav } from './BottomNav';
 import { TopNav } from './TopNav';
+import { Onboarding } from './Onboarding';
 
 export function AppLayout() {
   return (
@@ -10,6 +11,7 @@ export function AppLayout() {
         <Outlet />
       </main>
       <BottomNav />
+      <Onboarding />
     </div>
   );
 }

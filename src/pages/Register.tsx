@@ -8,6 +8,7 @@ import { authService } from '../services/authService';
 import { universityService } from '../services/universityService';
 import { useAuth } from '../hooks/useAuth';
 import type { Faculty, University } from '../types';
+import { consumeRedirect } from '../utils/redirect';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TOTAL_STEPS = 3;
@@ -125,7 +126,7 @@ export function Register() {
     }
 
     await refresh();
-    navigate('/explore');
+    navigate(consumeRedirect());
   };
 
   const handleResend = async () => {

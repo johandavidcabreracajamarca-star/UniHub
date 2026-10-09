@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import type { Product, ProductCategory } from '../types';
+import { CATEGORY_LABELS } from '../types';
 import { demoDb } from '../data/demoDb';
 import { businessService } from './businessService';
 import { distanceToBusiness, type Coordinates } from '../utils/geo';
@@ -62,6 +63,10 @@ function sortProducts(
   }
 }
 
+function normalize(text: string): string {
+  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
 async function enrichWithBusiness(product: Product): Promise<Product> {
   const business = await businessService.getById(product.business_id);
   return { ...product, business: business ?? undefined };
@@ -91,11 +96,13 @@ export const productService = {
 
     const filtered = products.filter((p) => {
       if (filters.query) {
-        const q = filters.query.toLowerCase();
-        const matchesName = p.name.toLowerCase().includes(q);
-        const matchesBusiness = p.business?.name.toLowerCase().includes(q);
-        const matchesCategory = p.category.toLowerCase().includes(q);
-        if (!matchesName && !matchesBusiness && !matchesCategory) return false;
+        // Sin importar tildes ni mayúsculas ("tecnologia" encuentra "Tecnología"),
+        // y cada palabra buscada debe aparecer en algún lado del producto.
+        const haystack = normalize(
+          [p.name, p.description, p.business?.name, p.category, CATEGORY_LABELS[p.category]].filter(Boolean).join(' ')
+        );
+        const words = normalize(filters.query).split(/\s+/).filter(Boolean);
+        if (!words.every((w) => haystack.includes(w))) return false;
       }
       if (filters.category && filters.category !== 'todas' && p.category !== filters.category) {
         return false;

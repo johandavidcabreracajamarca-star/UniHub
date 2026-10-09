@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, MapPin, Circle, MessageCircle } from 'lucide-react';
+import { ArrowLeft, MapPin, Circle, MessageCircle, Share2 } from 'lucide-react';
 import type { Business, Product, Review } from '../types';
 import { CATEGORY_LABELS } from '../types';
 import { businessService } from '../services/businessService';
@@ -12,7 +12,8 @@ import { VerifiedBadge } from '../components/VerifiedBadge';
 import { StarRating } from '../components/StarRating';
 import { ProductCard } from '../components/ProductCard';
 import { ProductGridSkeleton, EmptyState, ErrorState } from '../components/StateViews';
-import { formatDate } from '../utils/format';
+import { formatDate, shortName } from '../utils/format';
+import { shareLink } from '../utils/share';
 
 export function BusinessProfile() {
   const { id } = useParams<{ id: string }>();
@@ -120,16 +121,31 @@ export function BusinessProfile() {
             )}
           </div>
 
+          <div className="mb-1 flex items-center gap-2">
+          <button
+            onClick={() =>
+              shareLink({
+                title: business.name,
+                text: `Conoce ${business.name}, un emprendimiento de la U en UniHub ✨`,
+                path: `/business/${business.id}`,
+              })
+            }
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-ink shadow-card transition-transform active:scale-90"
+            aria-label="Compartir emprendimiento"
+          >
+            <Share2 size={16} />
+          </button>
           {!isOwnBusiness && (
             <button
               onClick={handleAsk}
               disabled={askingLoading}
-              className="mb-1 flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white shadow-card transition-transform active:scale-95 disabled:opacity-60"
+              className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white shadow-card transition-transform active:scale-95 disabled:opacity-60"
             >
               <MessageCircle size={15} />
               Preguntar
             </button>
           )}
+          </div>
         </div>
 
         <div className="mt-3 flex items-center gap-2">
@@ -190,7 +206,7 @@ export function BusinessProfile() {
               {reviews.map((r) => (
                 <div key={r.id} className="rounded-card border border-ink/8 bg-white p-3.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-ink">{r.buyer_name ?? 'Estudiante'}</span>
+                    <span className="text-sm font-medium text-ink">{shortName(r.buyer_name)}</span>
                     <span className="text-xs text-ink/40">{formatDate(r.created_at)}</span>
                   </div>
                   <div className="mt-1">
