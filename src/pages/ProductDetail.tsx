@@ -17,6 +17,7 @@ import { RowSkeleton, ErrorState } from '../components/StateViews';
 import { useAuth } from '../hooks/useAuth';
 import { ProductExtras } from '../components/ProductExtras';
 import { shareLink } from '../utils/share';
+import { statsService } from '../services/statsService';
 
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -39,6 +40,12 @@ export function ProductDetail() {
       setProduct(data);
       // Si solo hay una variante, no tiene sentido obligar a elegirla.
       setSelectedVariant(data?.variants?.length === 1 ? data.variants[0] : null);
+      // Cuenta la visita para las estadísticas del emprendedor (no la del propio dueño)
+      if (data?.business && profile && profile.id !== data.business.owner_id) {
+        statsService
+          .recordProductView({ productId: data.id, businessId: data.business_id, viewerId: profile.id })
+          .catch(() => {});
+      }
     } catch {
       setError(true);
     } finally {

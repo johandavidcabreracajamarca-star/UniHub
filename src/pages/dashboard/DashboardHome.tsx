@@ -18,6 +18,8 @@ import { Input, Select, Textarea } from '../../components/Input';
 import { CATEGORY_LABELS } from '../../types';
 import type { ProductCategory } from '../../types';
 import { useToast } from '../../hooks/useToast';
+import type { Order, Product } from '../../types';
+import { BusinessInsights } from './BusinessInsights';
 
 export function DashboardHome() {
   const { profile } = useAuth();
@@ -28,6 +30,8 @@ export function DashboardHome() {
     totalOrders: number;
     totalSales: number;
   } | null>(null);
+  const [myProducts, setMyProducts] = useState<Product[]>([]);
+  const [myOrders, setMyOrders] = useState<Order[]>([]);
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
@@ -192,6 +196,8 @@ export function DashboardHome() {
         productService.listByBusiness(business.id),
         orderService.listByBusiness(business.id),
       ]);
+      setMyProducts(products);
+      setMyOrders(orders);
       setStats({
         activeProducts: products.filter((p) => p.available).length,
         totalOrders: orders.length,
@@ -415,6 +421,8 @@ export function DashboardHome() {
           color="primary"
         />
       </div>
+
+      <BusinessInsights businessId={business.id} products={myProducts} orders={myOrders} />
 
       {!business.verified && (
         <div className="mt-4 rounded-card bg-secondary-light p-3.5 text-xs text-secondary">
