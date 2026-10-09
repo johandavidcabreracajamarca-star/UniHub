@@ -49,7 +49,7 @@ function serviceKey(): string {
   } catch {
     // formato desconocido
   }
-  throw new Error('Supabase no entregó la llave de servicio a la función');
+  throw new Error('Supabase no entreg\u00f3 la llave de servicio a la funci\u00f3n');
 }
 
 async function buildMessage(supabase: SupabaseClient, payload: WebhookPayload): Promise<PushMessage | null> {
@@ -60,7 +60,7 @@ async function buildMessage(supabase: SupabaseClient, payload: WebhookPayload): 
     const isSale = link.startsWith('/dashboard');
     return {
       userId: String(r.user_id),
-      title: isSale ? '¡Nueva venta! 🎉' : 'UniHub · Tu pedido',
+      title: isSale ? '\u00a1Nueva venta! \u{1F389}' : 'UniHub \u00b7 Tu pedido',
       body: String(r.message ?? 'Hay novedades en tu pedido.'),
       url: link,
       tag: `${isSale ? 'sale' : 'order'}-${r.order_id}`,
@@ -73,7 +73,7 @@ async function buildMessage(supabase: SupabaseClient, payload: WebhookPayload): 
       .select('buyer_id, business:businesses(owner_id, name)')
       .eq('id', r.conversation_id)
       .single();
-    if (error || !conv) throw new Error(`No se encontró la conversación: ${error?.message ?? 'vacía'}`);
+    if (error || !conv) throw new Error(`No se encontr\u00f3 la conversaci\u00f3n: ${error?.message ?? 'vac\u00eda'}`);
 
     const business = conv.business as unknown as { owner_id: string; name: string } | null;
     const senderIsBuyer = r.sender_id === conv.buyer_id;
@@ -89,7 +89,7 @@ async function buildMessage(supabase: SupabaseClient, payload: WebhookPayload): 
     return {
       userId: recipient,
       title: `Mensaje de ${senderName}`,
-      body: text.length > 120 ? `${text.slice(0, 117)}…` : text,
+      body: text.length > 120 ? `${text.slice(0, 117)}\u2026` : text,
       url: `/messages/${r.conversation_id}`,
       tag: `chat-${r.conversation_id}`,
     };
@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
   const received = (req.headers.get('x-webhook-secret') ?? '').trim();
   if (!expected || received !== expected) {
     const reason = !expected
-      ? 'falta el secreto WEBHOOK_SECRET en Edge Functions → Secrets'
+      ? 'falta el secreto WEBHOOK_SECRET en Edge Functions > Secrets'
       : 'el header x-webhook-secret del webhook no coincide con WEBHOOK_SECRET';
     console.error(`[send-push] No autorizado: ${reason}`);
     return Response.json({ error: `No autorizado: ${reason}` }, { status: 401 });
@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
       .eq('user_id', message.userId);
     if (error) throw new Error(`No se pudo leer push_subscriptions: ${error.message}`);
     if (!subs || subs.length === 0) {
-      const note = `El usuario ${message.userId.slice(0, 8)} no tiene avisos activados en ningún celular`;
+      const note = `El usuario ${message.userId.slice(0, 8)} no tiene avisos activados en ning\u00fan celular`;
       console.log(`[send-push] ${note}`);
       return Response.json({ sent: 0, total: 0, note });
     }
@@ -149,7 +149,7 @@ Deno.serve(async (req) => {
           sent += 1;
         } catch (err) {
           const e = err as { statusCode?: number; body?: string; message?: string };
-          failures.push(`${host}: ${e.statusCode ?? 'sin código'} ${e.body || e.message || String(err)}`.slice(0, 200));
+          failures.push(`${host}: ${e.statusCode ?? 'sin c\u00f3digo'} ${e.body || e.message || String(err)}`.slice(0, 200));
           // El celular ya no acepta avisos (app desinstalada, permiso quitado…)
           if (e.statusCode === 404 || e.statusCode === 410) {
             await supabase.from('push_subscriptions').delete().eq('id', s.id);

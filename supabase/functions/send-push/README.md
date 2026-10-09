@@ -55,8 +55,12 @@ Cuando cambie `index.ts`, entra a **Edge Functions → send-push → Code**, ree
 
 ## Si los avisos no llegan
 
-Corre en el **SQL Editor** la consulta del final de `supabase/migrations/20261009_avisos_ventas.sql`, la que empieza en "Diagnóstico". Muestra:
+Corre en el **SQL Editor** el contenido de `supabase/diagnostico_avisos.sql` (solo lee, no cambia nada). Muestra:
 
 - **llamada a send-push:** lo que respondió la función en cada intento. Si dice `401`, el header `x-webhook-secret` no coincide con el secreto, o "Verify JWT" sigue activado. Si dice `sent: 0` con una nota, ese usuario no tiene avisos activados.
 - **celular con avisos:** qué usuarios tienen avisos activados y en qué servicio. `web.push.apple.com` es iPhone y `fcm.googleapis.com` es Android/Chrome.
 - **notificación:** a quién iba dirigida cada una.
+
+Si la función responde `{"sent":0,"total":0}` aunque el usuario sí tenga un celular con avisos, corre `supabase/migrations/20261009_avisos_arreglo.sql`: le da a la función permiso para leer la tabla de suscripciones.
+
+> **Al copiar código desde la Terminal de Mac** usa `LANG=en_US.UTF-8 pbcopy < archivo`. Sin eso, las tildes se dañan ("ó" → "√≥").

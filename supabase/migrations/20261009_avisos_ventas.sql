@@ -49,10 +49,10 @@ begin
   values (
     v_owner,
     new.order_id,
-    coalesce(nullif(v_buyer_name, ''), 'Un estudiante') || ' te pidió '
-      || new.quantity || ' × ' || coalesce(v_product, 'un producto')
+    coalesce(nullif(v_buyer_name, ''), 'Un estudiante') || U&' te pidi\00F3 '
+      || new.quantity || U&' \00D7 ' || coalesce(v_product, 'un producto')
       || coalesce(' (' || nullif(new.variant_name, '') || ')', '')
-      || ' · $' || replace(to_char(coalesce(v_total, new.quantity * new.unit_price), 'FM999,999,999'), ',', '.'),
+      || U&' \00B7 $' || replace(to_char(coalesce(v_total, new.quantity * new.unit_price), 'FM999,999,999'), ',', '.'),
     false,
     '/dashboard/orders'
   );
