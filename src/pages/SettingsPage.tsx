@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { ArrowLeft, User, Mail, Bell, HelpCircle, ChevronRight } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { areNotificationsMuted, setNotificationsMuted } from '../utils/notificationPrefs';
+import { PushToggle } from '../components/PushToggle';
 
 export function SettingsPage() {
   const { profile } = useAuth();
@@ -39,15 +40,16 @@ export function SettingsPage() {
       <p className="mb-2 mt-6 px-1 text-xs font-semibold uppercase tracking-wide text-ink/40">
         Notificaciones
       </p>
-      <div className="rounded-card-lg border border-ink/8 bg-white p-4 shadow-card">
-        <div className="flex items-center justify-between gap-3">
+      <div className="divide-y divide-ink/6 overflow-hidden rounded-card-lg border border-ink/8 bg-white shadow-card">
+        <PushToggle />
+        <div className="flex items-center justify-between gap-3 p-4">
           <div className="flex items-center gap-3">
             <span className="flex h-9 w-9 items-center justify-center rounded-control bg-surface text-ink/50">
               <Bell size={17} />
             </span>
             <div>
               <p className="text-sm font-medium text-ink">Silenciar notificaciones</p>
-              <p className="mt-0.5 text-xs text-ink/50">En este dispositivo</p>
+              <p className="mt-0.5 text-xs text-ink/50">Dentro de la app, en este dispositivo</p>
             </div>
           </div>
           <button

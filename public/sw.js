@@ -14,7 +14,7 @@
 // sube el número de CACHE_NAME (v1 -> v2, etc.).
 // ============================================================================
 
-const CACHE_NAME = 'unihub-cache-v4';
+const CACHE_NAME = 'unihub-cache-v5';
 const APP_SHELL = ['/', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png'];
 
 // Si la red tarda más que esto, dejamos de esperarla y usamos lo que haya en
@@ -69,6 +69,24 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Páginas (abrir la app o una ruta): primero la red, para que después de
+  // cada actualización se vea la versión nueva de una vez. Si no hay
+  // conexión o tarda demasiado, usamos la copia guardada.
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetchWithTimeout(request, NETWORK_TIMEOUT_MS)
+        .then((response) => {
+          if (response && response.ok) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put('/', responseClone));
+          }
+          return response;
+        })
+        .catch(async () => (await caches.match('/')) || Response.error())
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(request).then((cached) => {
       const networkFetch = fetchWithTimeout(request, NETWORK_TIMEOUT_MS)
@@ -97,6 +115,45 @@ self.addEventListener('fetch', (event) => {
       // "Stale-while-revalidate": si hay copia en caché, se muestra al instante
       // (rápido, funciona sin internet) y de fondo se actualiza con la red.
       return cached || networkFetch;
+    })
+  );
+});
+
+// ----------------------------------------------------------------------------
+// AVISOS AL CELULAR (push): los envía la función send-push de Supabase
+// ----------------------------------------------------------------------------
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { body: event.data ? event.data.text() : '' };
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'UniHub', {
+      body: data.body || '',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      tag: data.tag,
+      renotify: Boolean(data.tag),
+      data: { url: data.url || '/explore' },
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = new URL(event.notification.data?.url || '/explore', self.location.origin).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      // Si la app ya está abierta, la reutilizamos en vez de abrir otra ventana
+      for (const client of clients) {
+        if ('focus' in client) {
+          client.navigate(url);
+          return client.focus();
+        }
+      }
+      return self.clients.openWindow(url);
     })
   );
 });

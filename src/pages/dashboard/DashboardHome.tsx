@@ -20,6 +20,7 @@ import type { ProductCategory } from '../../types';
 import { useToast } from '../../hooks/useToast';
 import type { Order, Product } from '../../types';
 import { BusinessInsights } from './BusinessInsights';
+import { PushToggle } from '../../components/PushToggle';
 
 export function DashboardHome() {
   const { profile } = useAuth();
@@ -421,6 +422,8 @@ export function DashboardHome() {
           color="primary"
         />
       </div>
+
+      <PushToggle variant="card" />
 
       <BusinessInsights businessId={business.id} products={myProducts} orders={myOrders} />
 

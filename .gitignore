@@ -27,3 +27,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Llaves secretas de los avisos push (nunca subir a GitHub)
+supabase/.env*
