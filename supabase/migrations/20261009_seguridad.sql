@@ -107,8 +107,7 @@ create trigger trg_guard_product_admin_fields
 --    "completado" para poder reseñar sin comprar).
 -- b) Nadie puede comprarle a su propio emprendimiento (así un dueño no puede
 --    crearse pedidos falsos, completarlos y dejarse reseñas de 5 estrellas).
--- c) El emprendedor solo puede cambiar el estado y el motivo de cancelación,
---    no el comprador, el negocio ni el total.
+-- c) Nadie puede cambiar el comprador ni el emprendimiento de un pedido.
 
 create or replace function public.guard_order_insert()
 returns trigger
@@ -142,10 +141,8 @@ as $$
 begin
   if auth.uid() is not null and not public.is_admin() then
     if new.buyer_id is distinct from old.buyer_id
-       or new.business_id is distinct from old.business_id
-       or new.total is distinct from old.total
-       or new.created_at is distinct from old.created_at then
-      raise exception 'Solo se puede cambiar el estado del pedido.';
+       or new.business_id is distinct from old.business_id then
+      raise exception 'No se puede cambiar el comprador ni el emprendimiento de un pedido.';
     end if;
   end if;
   return new;
