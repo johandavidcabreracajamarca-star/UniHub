@@ -222,7 +222,6 @@ export function DashboardHome() {
             ref={logoInputRef}
             type="file"
             accept="image/*"
-            capture="environment"
             onChange={handleLogoSelect}
             className="hidden"
           />

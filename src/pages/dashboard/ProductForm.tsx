@@ -367,7 +367,6 @@ export function ProductForm() {
             ref={fileInputRef}
             type="file"
             accept="image/*"
-            capture="environment"
             onChange={handleFileSelect}
             className="hidden"
           />
@@ -392,7 +391,7 @@ export function ProductForm() {
               ) : (
                 <div className="flex flex-col items-center gap-1 text-ink/40">
                   <Camera size={22} />
-                  <span className="text-[11px] font-medium">Tomar foto</span>
+                  <span className="text-[11px] font-medium">Subir foto</span>
                 </div>
               )}
             </button>
