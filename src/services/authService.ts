@@ -1,6 +1,7 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import type { Profile, University, UserRole } from '../types';
 import { demoProfiles } from '../data/demoData';
+import { pushService } from './pushService';
 
 const DEMO_SESSION_KEY = 'unihub_demo_session';
 const DEMO_USERS_KEY = 'unihub_demo_users'; // { [email]: { password, profile } }
@@ -157,6 +158,12 @@ export const authService = {
 
   async logout(): Promise<void> {
     if (isSupabaseConfigured && supabase) {
+      // Mientras la sesión sigue abierta, quitamos este celular de los avisos
+      // de la cuenta. Sin esperar más de 3 s para no trabar el cierre de sesión.
+      await Promise.race([
+        pushService.forgetThisDevice().catch(() => {}),
+        new Promise((resolve) => setTimeout(resolve, 3000)),
+      ]);
       await supabase.auth.signOut();
       return;
     }

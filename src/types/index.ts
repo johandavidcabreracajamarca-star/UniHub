@@ -185,6 +185,9 @@ export interface Notification {
   message: string;
   read: boolean;
   created_at: string;
+  // a dónde lleva al tocarla: '/orders' (comprador) o '/dashboard/orders'
+  // (venta nueva para el emprendedor). Null = '/orders'.
+  link?: string | null;
 }
 
 export interface Conversation {

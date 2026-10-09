@@ -48,3 +48,15 @@ Los valores secretos están en `supabase/.env.push`, en tu computador. Ese archi
 4. Debe llegar el aviso aunque la app esté cerrada.
 
 Si no llega, revisa **Edge Functions → send-push → Logs**.
+
+## Actualizar la función
+
+Cuando cambie `index.ts`, entra a **Edge Functions → send-push → Code**, reemplaza todo el código por el nuevo y dale **Deploy**. Los secretos y los webhooks no se tocan.
+
+## Si los avisos no llegan
+
+Corre en el **SQL Editor** la consulta del final de `supabase/migrations/20261009_avisos_ventas.sql`, la que empieza en "Diagnóstico". Muestra:
+
+- **llamada a send-push:** lo que respondió la función en cada intento. Si dice `401`, el header `x-webhook-secret` no coincide con el secreto, o "Verify JWT" sigue activado. Si dice `sent: 0` con una nota, ese usuario no tiene avisos activados.
+- **celular con avisos:** qué usuarios tienen avisos activados y en qué servicio. `web.push.apple.com` es iPhone y `fcm.googleapis.com` es Android/Chrome.
+- **notificación:** a quién iba dirigida cada una.

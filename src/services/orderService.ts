@@ -6,6 +6,7 @@ import { productService } from './productService';
 import { productVariantService } from './productVariantService';
 import { notificationService } from './notificationService';
 import { demoProfiles } from '../data/demoData';
+import { formatCOP } from '../utils/format';
 
 async function enrichOrder(order: Order): Promise<Order> {
   const business = await businessService.getById(order.business_id);
@@ -150,6 +151,26 @@ export const orderService = {
     const orders = demoDb.getOrders();
     orders.unshift(newOrder);
     demoDb.saveOrders(orders);
+
+    // Aviso de venta para el emprendedor (en Supabase lo crea el trigger
+    // trg_notify_seller_new_order, ver supabase/migrations/20261009_avisos_ventas.sql)
+    const sellerBusiness = await businessService.getById(input.business_id);
+    if (sellerBusiness && sellerBusiness.owner_id !== input.buyer_id) {
+      const buyerName = demoProfiles.find((p) => p.id === input.buyer_id)?.full_name.split(' ')[0] ?? 'Un estudiante';
+      const notifications = demoDb.getNotifications();
+      notifications.unshift({
+        id: `notif-${Date.now()}-sale`,
+        user_id: sellerBusiness.owner_id,
+        order_id: newOrder.id,
+        message: `${buyerName} te pidió ${input.quantity} × ${product.name}${
+          input.variant_name ? ` (${input.variant_name})` : ''
+        } · ${formatCOP(total)}`,
+        read: false,
+        created_at: new Date().toISOString(),
+        link: '/dashboard/orders',
+      });
+      demoDb.saveNotifications(notifications);
+    }
 
     // Descontar stock (de la variante si aplica, o del producto)
     if (input.variant_id) {
