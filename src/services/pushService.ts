@@ -74,10 +74,14 @@ export const pushService = {
         { endpoint: json.endpoint, p256dh: json.keys?.p256dh, auth: json.keys?.auth },
         { onConflict: 'endpoint' }
       );
-      if (error) return { status: 'disabled', error: 'No se pudieron activar los avisos. Intenta de nuevo.' };
+      if (error) {
+        console.error('push_subscriptions:', error);
+        return { status: 'disabled', error: `No se pudieron activar los avisos (${error.message}).` };
+      }
       return { status: 'enabled', error: null };
-    } catch {
-      return { status: 'disabled', error: 'Tu navegador no permitió activar los avisos.' };
+    } catch (err) {
+      const detail = err instanceof Error ? ` (${err.message})` : '';
+      return { status: 'disabled', error: `Tu navegador no permitió activar los avisos${detail}.` };
     }
   },
 
