@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Receipt, Star } from 'lucide-react';
-import type { Order } from '../types';
+import type { Order, OrderStatus } from '../types';
 import { orderService } from '../services/orderService';
 import { reviewService } from '../services/reviewService';
 import { useAuth } from '../hooks/useAuth';
@@ -11,7 +11,7 @@ import { ProductImage } from '../components/ProductImage';
 import { RowSkeleton, EmptyState, ErrorState } from '../components/StateViews';
 import { ReviewModal } from '../components/ReviewModal';
 import { Button } from '../components/Button';
-import { formatCOP, formatDateTime } from '../utils/format';
+import { formatCOP } from '../utils/format';
 
 export function Orders() {
   const { profile } = useAuth();
@@ -55,7 +55,7 @@ export function Orders() {
   if (loading) {
     return (
       <div className="px-4 pt-4 md:px-6 md:pt-6">
-        <h1 className="mb-4 text-xl font-bold text-ink">Pedidos</h1>
+        <h1 className="mb-4 font-serif text-2xl font-semibold text-ink">Pedidos</h1>
         <RowSkeleton count={3} />
       </div>
     );
@@ -65,7 +65,7 @@ export function Orders() {
 
   return (
     <div className="px-4 pt-4 pb-6 md:px-6 md:pt-6 md:max-w-2xl md:mx-auto">
-      <h1 className="mb-4 text-xl font-bold text-ink">Pedidos</h1>
+      <h1 className="mb-5 font-serif text-2xl font-semibold text-ink">Pedidos</h1>
 
       {orders.length === 0 ? (
         <EmptyState
@@ -89,7 +89,7 @@ export function Orders() {
                   <ProductImage
                     src={item?.product?.image}
                     category={item?.product?.category}
-                    className="h-14 w-14 shrink-0 rounded-control"
+                    className="h-16 w-16 shrink-0 rounded-control"
                     iconSize={18}
                     alt={item?.product?.name}
                     name={item?.product?.name}
@@ -97,7 +97,7 @@ export function Orders() {
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-semibold text-ink line-clamp-1">
+                      <p className="min-w-0 text-sm font-semibold text-ink line-clamp-2">
                         {item?.product?.name ?? 'Producto eliminado'}
                         {item?.variant_name && (
                           <span className="font-normal text-ink/50"> · {item.variant_name}</span>
@@ -105,18 +105,21 @@ export function Orders() {
                       </p>
                       <OrderStatusBadge status={order.status} />
                     </div>
-                                    <p className="text-xs text-ink/50">{order.business?.name}</p>
+                    <p className="mt-0.5 text-xs text-ink/50">{order.business?.name}</p>
                     {order.status === 'cancelado' && order.cancellation_reason && (
                       <p className="mt-0.5 text-xs text-red-500">Motivo: {order.cancellation_reason}</p>
                     )}
-                    <div className="mt-1 flex items-center justify-between">
+                    <div className="mt-2 flex items-end justify-between gap-2">
                       <span className="text-xs text-ink/40">
-                        {item ? `Cantidad: ${item.quantity}` : ''} · {formatDateTime(order.created_at)}
+                        {item ? `${item.quantity} ${item.quantity === 1 ? 'unidad' : 'unidades'} · ` : ''}
+                        {formatShortDate(order.created_at)}
                       </span>
-                      <span className="text-sm font-semibold text-ink">{formatCOP(order.total)}</span>
+                      <span className="shrink-0 text-base font-bold text-ink">{formatCOP(order.total)}</span>
                     </div>
                   </div>
                 </div>
+
+                {order.status !== 'cancelado' && <OrderProgress status={order.status} />}
 
                 {canReview && (
                   <Button
@@ -147,6 +150,33 @@ export function Orders() {
           }}
         />
       )}
+    </div>
+  );
+}
+
+const formatShortDate = (iso: string) =>
+  new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short' }).format(new Date(iso)).replace('.', '');
+
+// Progreso del pedido en 3 pasos, para entender de un vistazo en qué va
+const PROGRESS_STEPS = ['Recibido', 'En preparación', 'Entregado'];
+const STATUS_STEP: Record<OrderStatus, number> = {
+  pendiente: 0,
+  confirmado: 1,
+  en_preparacion: 1,
+  completado: 2,
+  cancelado: -1,
+};
+
+function OrderProgress({ status }: { status: OrderStatus }) {
+  const current = STATUS_STEP[status];
+  return (
+    <div className="mt-3.5 grid grid-cols-3 gap-1.5">
+      {PROGRESS_STEPS.map((label, i) => (
+        <div key={label}>
+          <div className={`h-1.5 rounded-full ${i <= current ? 'bg-primary' : 'bg-ink/10'}`} />
+          <p className={`mt-1.5 text-[11px] font-medium ${i <= current ? 'text-primary' : 'text-ink/35'}`}>{label}</p>
+        </div>
+      ))}
     </div>
   );
 }

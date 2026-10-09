@@ -13,7 +13,7 @@ export function HomeHeader() {
   return (
     <div className="md:hidden relative overflow-hidden rounded-b-[38px] bg-primary px-5 pb-6 pt-5 text-white">
       <div className="pointer-events-none absolute -right-14 -top-16 h-52 w-52 rounded-full bg-white/[0.07]" />
-      <div className="pointer-events-none absolute right-8 top-24 h-[70px] w-[70px] rounded-full bg-accent/90" />
+      <div className="pointer-events-none absolute -right-12 top-[92px] h-28 w-28 rounded-full bg-accent/90" />
 
       <div className="relative flex items-center justify-between">
         <div className="flex items-center gap-2.5">

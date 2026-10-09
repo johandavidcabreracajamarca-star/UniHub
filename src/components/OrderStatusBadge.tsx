@@ -11,7 +11,7 @@ const STATUS_STYLES: Record<OrderStatus, string> = {
 
 export function OrderStatusBadge({ status }: { status: OrderStatus }) {
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_STYLES[status]}`}>
+    <span className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_STYLES[status]}`}>
       {ORDER_STATUS_LABELS[status]}
     </span>
   );

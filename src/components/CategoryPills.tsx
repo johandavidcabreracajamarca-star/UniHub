@@ -1,4 +1,4 @@
-import { Utensils, Shirt, Cpu, Watch, Wrench, Grid3x3 } from 'lucide-react';
+import { Utensils, Shirt, Cpu, Watch, Wrench, LayoutGrid, Shapes } from 'lucide-react';
 import type { ProductCategory } from '../types';
 import { CATEGORY_LABELS } from '../types';
 
@@ -8,7 +8,7 @@ const CATEGORY_ICONS: Record<ProductCategory, typeof Utensils> = {
   tecnologia: Cpu,
   accesorios: Watch,
   servicios: Wrench,
-  otros: Grid3x3,
+  otros: Shapes,
 };
 
 // Color de cada categoría cuando NO está seleccionada (paleta de la marca).
@@ -30,12 +30,12 @@ interface CategoryPillsProps {
 
 export function CategoryPills({ selected, onSelect }: CategoryPillsProps) {
   return (
-    <div className="flex gap-3 overflow-x-auto px-4 pb-2 pt-1 scrollbar-none md:px-0">
+    <div className="flex gap-3 overflow-x-auto px-4 pb-2 pt-1.5 scrollbar-none md:px-6">
       <Tile
         active={selected === 'todas'}
         onClick={() => onSelect('todas')}
         label="Todas"
-        Icon={Grid3x3}
+        Icon={LayoutGrid}
         tone="bg-white text-ink/60"
       />
       {CATEGORIES.map((cat) => (

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, Star } from 'lucide-react';
 import type { Product } from '../types';
 import { formatCOP } from '../utils/format';
 import { formatDistance } from '../utils/geo';
@@ -23,6 +23,9 @@ export function ProductCard({
   const onSale = isProductOnSale(product);
   const finalPrice = onSale ? getDiscountedPrice(product) : product.price;
   const availableNow = business?.available_now;
+  const rating = business?.rating ?? 0;
+  // "Nuevo" durante la primera semana de publicado
+  const isNew = Date.now() - new Date(product.created_at).getTime() < 7 * 24 * 60 * 60 * 1000;
   const variantRange = getVariantPriceRange(product);
   const soldOut = isProductSoldOut(product);
 
@@ -45,6 +48,11 @@ export function ProductCard({
             <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-ink">Agotado</span>
           </div>
         )}
+        {!soldOut && !onSale && isNew && (
+          <span className="absolute left-0 top-3 rounded-r-xl bg-primary py-1 pl-2.5 pr-3 text-xs font-bold text-white shadow-card">
+            Nuevo
+          </span>
+        )}
         {!soldOut && onSale && !variantRange && (
           <span className="absolute left-0 top-3 rounded-r-xl bg-accent py-1 pl-2.5 pr-3 text-xs font-bold text-ink shadow-card">
             -{product.discount_percent}%
@@ -53,13 +61,19 @@ export function ProductCard({
       </div>
 
       <div className="px-3 pb-3 pt-2.5">
-        <h3 className="line-clamp-1 text-sm font-semibold text-ink">{product.name}</h3>
+        <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-semibold leading-5 text-ink">{product.name}</h3>
 
         {business && (
           <div className="mt-1 flex min-w-0 items-center gap-1">
             <span className="truncate text-xs text-ink/60">{business.name}</span>
             {business.verified && <VerifiedBadge compact />}
             {distanceLabel && <span className="shrink-0 text-xs text-ink/40">· {distanceLabel}</span>}
+            {rating > 0 && (
+              <span className="ml-auto flex shrink-0 items-center gap-0.5 text-xs font-semibold text-ink">
+                <Star size={12} className="fill-accent text-accent" strokeWidth={0} />
+                {rating.toFixed(1)}
+              </span>
+            )}
           </div>
         )}
 

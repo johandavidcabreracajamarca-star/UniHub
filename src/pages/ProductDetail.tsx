@@ -91,13 +91,13 @@ export function ProductDetail() {
   };
 
   return (
-    <div className="pb-28 md:pb-10">
-      <div className="px-4 pt-4 md:px-0 md:pt-0">
-      <div className="relative overflow-hidden rounded-[30px] md:rounded-none">
+    <div className="pb-28 md:grid md:grid-cols-2 md:items-start md:gap-10 md:px-6 md:pb-10 md:pt-6">
+      <div className="px-4 pt-4 md:sticky md:top-24 md:px-0 md:pt-0">
+      <div className="relative overflow-hidden rounded-[30px]">
         <ProductImage
           src={product.image}
           category={product.category}
-          className="aspect-[5/4] w-full md:aspect-[21/9]"
+          className="aspect-[5/4] w-full md:aspect-square"
           iconSize={44}
           alt={product.name}
           name={product.name}
@@ -123,7 +123,8 @@ export function ProductDetail() {
       </div>
       </div>
 
-      <div className="px-4 pt-4 md:px-6 md:max-w-2xl md:mx-auto">
+      <div>
+      <div className="px-4 pt-4 md:px-0 md:pt-2">
         <div className="flex flex-wrap items-center gap-2">
           {typeof business?.available_now === 'boolean' && (
             <span
@@ -139,7 +140,7 @@ export function ProductDetail() {
             {CATEGORY_LABELS[product.category]}
           </span>
         </div>
-        <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight text-ink">{product.name}</h1>
+        <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight text-ink md:font-serif md:text-4xl md:font-semibold">{product.name}</h1>
 
         <p className="mt-4 text-sm leading-relaxed text-ink/70">{product.description}</p>
 
@@ -233,7 +234,7 @@ export function ProductDetail() {
         )}
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-4 border-t border-ink/8 bg-white px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 md:static md:mt-6 md:border-0 md:px-6 md:max-w-2xl md:mx-auto">
+      <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-4 border-t border-ink/8 bg-white px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 md:static md:mt-6 md:rounded-card md:border md:px-5 md:py-4 md:shadow-card">
         <div className="shrink-0">
           {onSale && <p className="text-xs leading-none text-ink/40 line-through">{formatCOP(product.price)}</p>}
           <p className="text-2xl font-extrabold leading-tight tracking-tight text-primary">
@@ -254,6 +255,7 @@ export function ProductDetail() {
         >
           {!product.available ? 'No disponible' : productHasVariants && !selectedVariant ? 'Elige una opción' : canBuy ? 'Comprar' : 'Agotado'}
         </Button>
+      </div>
       </div>
 
       {showPurchase && (

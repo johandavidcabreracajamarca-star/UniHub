@@ -1,4 +1,4 @@
-import { ImageIcon } from 'lucide-react';
+import { Utensils, Shirt, Cpu, Watch, Wrench, Shapes } from 'lucide-react';
 import type { ProductCategory } from '../types';
 
 const CATEGORY_GRADIENTS: Record<ProductCategory, string> = {
@@ -10,6 +10,24 @@ const CATEGORY_GRADIENTS: Record<ProductCategory, string> = {
   otros: 'from-ink/15 to-ink/5',
 };
 
+const CATEGORY_ICONS: Record<ProductCategory, typeof Utensils> = {
+  comida: Utensils,
+  ropa: Shirt,
+  tecnologia: Cpu,
+  accesorios: Watch,
+  servicios: Wrench,
+  otros: Shapes,
+};
+
+const CATEGORY_ICON_COLORS: Record<ProductCategory, string> = {
+  comida: 'text-accent-dark/70',
+  ropa: 'text-secondary/50',
+  tecnologia: 'text-primary/60',
+  accesorios: 'text-accent-dark/60',
+  servicios: 'text-secondary/50',
+  otros: 'text-ink/35',
+};
+
 interface ImagePlaceholderProps {
   category?: ProductCategory;
   className?: string;
@@ -17,11 +35,12 @@ interface ImagePlaceholderProps {
 }
 
 export function ImagePlaceholder({ category = 'otros', className = '', iconSize = 28 }: ImagePlaceholderProps) {
+  const Icon = CATEGORY_ICONS[category];
   return (
     <div
       className={`flex items-center justify-center bg-gradient-to-br ${CATEGORY_GRADIENTS[category]} ${className}`}
     >
-      <ImageIcon size={iconSize} strokeWidth={1.5} className="text-ink/25" />
+      <Icon size={iconSize * 1.4} strokeWidth={1.4} className={CATEGORY_ICON_COLORS[category]} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -11,14 +11,33 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useMyBusiness } from '../hooks/useMyBusiness';
+import { orderService } from '../services/orderService';
+import { favoriteService } from '../services/favoriteService';
 
 export function ProfilePage() {
   const { profile, logout } = useAuth();
   const { business, loading: loadingBusiness } = useMyBusiness();
   const navigate = useNavigate();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [stats, setStats] = useState<{ orders: number; favorites: number } | null>(null);
+
+  useEffect(() => {
+    if (!profile) return;
+    let active = true;
+    Promise.all([orderService.listByBuyer(profile.id), favoriteService.listFavoriteIds(profile.id)])
+      .then(([orders, favorites]) => {
+        if (active) setStats({ orders: orders.length, favorites: favorites.size });
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [profile]);
 
   if (!profile) return null;
+
+  const joined = new Date(profile.created_at);
+  const memberSince = `${new Intl.DateTimeFormat('es-CO', { month: 'short' }).format(joined).replace('.', '')} ${joined.getFullYear()}`;
 
   const isAdmin = profile.role === 'admin';
   const hasBusiness = Boolean(business);
@@ -33,15 +52,24 @@ export function ProfilePage() {
     <div className="px-4 pt-4 pb-8 md:px-6 md:pt-6 md:max-w-lg md:mx-auto">
       <h1 className="mb-5 font-serif text-2xl font-semibold text-ink">Perfil</h1>
 
-      <div className="flex items-center gap-4 rounded-card-lg border border-ink/8 bg-white p-5 shadow-card">
-        <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-secondary-light text-2xl font-bold text-secondary">
-          {profile.full_name[0]?.toUpperCase()}
-        </span>
-        <div className="min-w-0">
-          <p className="font-serif text-lg font-semibold text-ink truncate">{profile.full_name}</p>
-          <span className="mt-1 inline-flex items-center rounded-full bg-primary-light px-2.5 py-0.5 text-xs font-medium text-primary-dark capitalize">
-            {profile.role}
+      <div className="relative overflow-hidden rounded-card-lg bg-primary p-5 text-white shadow-card-hover">
+        <div className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-white/[0.07]" />
+        <div className="relative flex items-center gap-4">
+          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-surface font-serif text-2xl font-semibold text-primary">
+            {profile.full_name[0]?.toUpperCase()}
           </span>
+          <div className="min-w-0">
+            <p className="font-serif text-xl font-semibold truncate">{profile.full_name}</p>
+            <p className="truncate text-xs text-white/70">{profile.email}</p>
+            <span className="mt-1.5 inline-flex items-center rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium">
+              {isAdmin ? 'Administrador' : hasBusiness ? 'Emprendedor' : 'Estudiante'}
+            </span>
+          </div>
+        </div>
+        <div className="relative mt-5 grid grid-cols-3 divide-x divide-white/15 rounded-2xl bg-white/10 py-3 text-center">
+          <Stat value={stats ? String(stats.orders) : '–'} label="Pedidos" />
+          <Stat value={stats ? String(stats.favorites) : '–'} label="Favoritos" />
+          <Stat value={memberSince} label="Miembro desde" />
         </div>
       </div>
 
@@ -107,6 +135,15 @@ export function ProfilePage() {
         <LogOut size={16} />
         {loggingOut ? 'Cerrando sesión…' : 'Cerrar sesión'}
       </button>
+    </div>
+  );
+}
+
+function Stat({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="px-2">
+      <p className="whitespace-nowrap text-base font-bold">{value}</p>
+      <p className="text-[11px] text-white/70">{label}</p>
     </div>
   );
 }

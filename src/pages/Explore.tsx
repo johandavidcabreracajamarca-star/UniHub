@@ -66,7 +66,7 @@ export function Explore() {
 
       <section className="mt-7 px-4 pb-6 md:px-6">
         <div className="mb-3 flex items-center justify-between gap-2">
-          <h2 className="text-lg font-bold tracking-tight text-ink">Productos destacados</h2>
+          <h2 className="whitespace-nowrap text-lg font-bold tracking-tight text-ink">Productos</h2>
           <SortSelect value={sort} onChange={setSort} />
         </div>
 
