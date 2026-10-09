@@ -263,7 +263,7 @@ export function ProductDetail() {
         <Button
           size="lg"
           fullWidth
-          disabled={!canBuy}
+          disabled={!canBuy || Boolean(isOwnBusiness)}
           onClick={() => {
             if (!profile) {
               navigate('/login');
@@ -272,7 +272,7 @@ export function ProductDetail() {
             setShowPurchase(true);
           }}
         >
-          {!product.available ? 'No disponible' : productHasVariants && !selectedVariant ? 'Elige una opción' : canBuy ? 'Comprar' : 'Agotado'}
+          {isOwnBusiness ? 'Es tu producto' : !product.available ? 'No disponible' : productHasVariants && !selectedVariant ? 'Elige una opción' : canBuy ? 'Comprar' : 'Agotado'}
         </Button>
       </div>
       </div>
