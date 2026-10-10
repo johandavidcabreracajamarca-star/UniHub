@@ -2,6 +2,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import type { Review } from '../types';
 import { demoDb } from '../data/demoDb';
 import { orderService } from './orderService';
+import { demoProfiles } from '../data/demoData';
 
 function recalcBusinessRating(businessId: string) {
   const reviews = demoDb.getReviews().filter((r) => r.business_id === businessId);
@@ -79,6 +80,25 @@ export const reviewService = {
     });
     demoDb.saveReviews(reviews);
     recalcBusinessRating(input.business_id);
+
+    // Aviso al emprendedor (en Supabase lo crea el trigger trg_notify_seller_new_review)
+    const owner = demoDb.getBusinesses().find((b) => b.id === input.business_id)?.owner_id;
+    if (owner) {
+      const buyerName = demoProfiles.find((p) => p.id === input.buyer_id)?.full_name.split(' ')[0] ?? 'Un estudiante';
+      const comment = input.comment.trim().slice(0, 80);
+      const notifications = demoDb.getNotifications();
+      notifications.unshift({
+        id: `notif-${Date.now()}-review`,
+        user_id: owner,
+        order_id: input.order_id,
+        message: `${buyerName} te dio ${'★'.repeat(input.rating)}${comment ? `: “${comment}”` : ''}`,
+        read: false,
+        created_at: new Date().toISOString(),
+        link: '/dashboard',
+        title: 'Nueva reseña ⭐',
+      });
+      demoDb.saveNotifications(notifications);
+    }
     return { error: null };
   },
 };

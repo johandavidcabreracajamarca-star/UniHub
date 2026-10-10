@@ -184,14 +184,17 @@ export const orderService = {
 
   async updateStatus(orderId: string, status: OrderStatus): Promise<{ error: string | null }> {
     let buyerId: string | null = null;
+    let businessName: string | null = null;
 
     if (isSupabaseConfigured && supabase) {
       const { data: existing } = await supabase
         .from('orders')
-        .select('buyer_id')
+        .select('buyer_id, business:businesses(name)')
         .eq('id', orderId)
         .single();
-      buyerId = (existing as { buyer_id: string } | null)?.buyer_id ?? null;
+      const row = existing as { buyer_id: string; business: { name: string } | null } | null;
+      buyerId = row?.buyer_id ?? null;
+      businessName = row?.business?.name ?? null;
 
       const { error } = await supabase.from('orders').update({ status }).eq('id', orderId);
       if (error) return { error: error.message };
@@ -199,13 +202,68 @@ export const orderService = {
       const orders = demoDb.getOrders();
       const idx = orders.findIndex((o) => o.id === orderId);
       if (idx === -1) return { error: 'Pedido no encontrado.' };
+      if (orders[idx].buyer_confirmed_at && orders[idx].status !== status) {
+        return { error: 'El comprador ya confirmó que recibió este pedido.' };
+      }
       buyerId = orders[idx].buyer_id;
+      businessName = (await businessService.getById(orders[idx].business_id))?.name ?? null;
       orders[idx] = { ...orders[idx], status };
       demoDb.saveOrders(orders);
     }
 
     if (buyerId) {
-      await notificationService.notifyOrderStatusChange({ order_id: orderId, buyer_id: buyerId, status });
+      await notificationService.notifyOrderStatusChange({
+        order_id: orderId,
+        buyer_id: buyerId,
+        status,
+        business_name: businessName,
+      });
+    }
+    return { error: null };
+  },
+
+  /**
+   * "Ya recibí mi pedido": lo confirma el comprador. Si el emprendedor aún no
+   * lo había marcado como entregado, el pedido se completa. Solo se puede
+   * cuando el emprendedor ya aceptó el pedido. En Supabase lo hace la función
+   * confirm_order_received (supabase/migrations/20261009_recibido_y_resenas.sql),
+   * que también le avisa al emprendedor.
+   */
+  async confirmReceived(orderId: string): Promise<{ error: string | null }> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase.rpc('confirm_order_received', { p_order_id: orderId });
+      return { error: error ? error.message : null };
+    }
+
+    const orders = demoDb.getOrders();
+    const idx = orders.findIndex((o) => o.id === orderId);
+    if (idx === -1) return { error: 'Pedido no encontrado.' };
+    const order = orders[idx];
+    if (order.buyer_confirmed_at) return { error: null };
+    if (!['confirmado', 'en_preparacion', 'completado'].includes(order.status)) {
+      return { error: 'Podrás confirmarlo cuando el emprendedor acepte tu pedido.' };
+    }
+    orders[idx] = { ...order, status: 'completado', buyer_confirmed_at: new Date().toISOString() };
+    demoDb.saveOrders(orders);
+
+    const business = await businessService.getById(order.business_id);
+    if (business) {
+      const buyerName = demoProfiles.find((p) => p.id === order.buyer_id)?.full_name.split(' ')[0] ?? 'Tu cliente';
+      const product = order.items?.[0] ? await productService.getById(order.items[0].product_id) : null;
+      const notifications = demoDb.getNotifications();
+      notifications.unshift({
+        id: `notif-${Date.now()}-recibido`,
+        user_id: business.owner_id,
+        order_id: order.id,
+        message: `${buyerName} confirmó que recibió ${
+          product && order.items?.[0] ? `${order.items[0].quantity} × ${product.name}` : 'su pedido'
+        }.`,
+        read: false,
+        created_at: new Date().toISOString(),
+        link: '/dashboard/orders',
+        title: 'Pedido recibido ✅',
+      });
+      demoDb.saveNotifications(notifications);
     }
     return { error: null };
   },

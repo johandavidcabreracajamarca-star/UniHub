@@ -58,16 +58,33 @@ export const notificationService = {
     buyer_id: string;
     status: OrderStatus;
     reason?: string | null;
+    business_name?: string | null;
   }): Promise<void> {
+    // Cuando el emprendedor marca el pedido como entregado, el aviso invita a
+    // confirmar que llegó y a calificar (y lleva directo a hacerlo).
+    const delivered = input.status === 'completado';
     const notification = {
       user_id: input.buyer_id,
       order_id: input.order_id,
-      message: statusMessage(input.status, input.reason),
+      message: delivered
+        ? `¿Cómo te fue${input.business_name ? ` con ${input.business_name}` : ''}? Confirma que lo recibiste y califícalo.`
+        : statusMessage(input.status, input.reason),
       read: false,
+      ...(delivered ? { title: 'Tu pedido fue entregado 📦', link: `/orders?calificar=${input.order_id}` } : {}),
     };
 
     if (isSupabaseConfigured && supabase) {
-      const { error } = await supabase.from('notifications').insert(notification);
+      let { error } = await supabase.from('notifications').insert(notification);
+      if (error && delivered) {
+        // Si la base de datos aún no tiene las columnas nuevas (title/link),
+        // guardamos el aviso sin ellas para no perderlo.
+        ({ error } = await supabase.from('notifications').insert({
+          user_id: notification.user_id,
+          order_id: notification.order_id,
+          message: notification.message,
+          read: false,
+        }));
+      }
       if (error) {
         // No bloqueamos el pedido por esto, pero lo dejamos visible en
         // consola para poder diagnosticar (ej. RLS, tabla faltante).

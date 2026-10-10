@@ -125,7 +125,11 @@ export function NotificationBell({ tone = 'default' }: { tone?: 'default' | 'lig
                     <Icon size={15} />
                   </span>
                   <span className="min-w-0">
-                    {isSale && <span className="block text-xs font-semibold text-accent-dark">¡Nueva venta!</span>}
+                    {(n.title || isSale) && (
+                      <span className={`block text-xs font-semibold ${isSale ? 'text-accent-dark' : 'text-primary'}`}>
+                        {n.title || '¡Nueva venta!'}
+                      </span>
+                    )}
                     <span className="block text-sm text-ink">{n.message}</span>
                     <span className="mt-0.5 block text-xs text-ink/40">{formatDateTime(n.created_at)}</span>
                   </span>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ClipboardList } from 'lucide-react';
+import { CheckCircle2, ClipboardList } from 'lucide-react';
 import type { Order, OrderStatus } from '../../types';
 import { ORDER_STATUS_LABELS } from '../../types';
 import { useMyBusiness } from '../../hooks/useMyBusiness';
@@ -99,6 +99,11 @@ export function DashboardOrders() {
               </div>
             </div>
 
+            {order.buyer_confirmed_at ? (
+              <p className="mt-3 flex items-center gap-1.5 rounded-control bg-green-50 px-3 py-2.5 text-xs font-semibold text-green-800">
+                <CheckCircle2 size={15} /> {order.buyer?.full_name?.split(' ')[0] ?? 'El comprador'} confirmó que lo recibió
+              </p>
+            ) : (
             <div className="mt-3">
               <Select
                 label="Actualizar estado"
@@ -113,6 +118,7 @@ export function DashboardOrders() {
                 ))}
               </Select>
             </div>
+            )}
           </div>
         );
       })}

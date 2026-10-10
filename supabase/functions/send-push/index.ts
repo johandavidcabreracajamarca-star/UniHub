@@ -1,9 +1,10 @@
 // ============================================================================
-// UNIHUB — send-push (Supabase Edge Function) · v2
+// UNIHUB — send-push (Supabase Edge Function) · v3
 // ============================================================================
 // La llaman dos "Database Webhooks" de Supabase:
 //   • INSERT en public.notifications → avisa al comprador del cambio en su
-//     pedido, o al emprendedor de una venta nueva.
+//     pedido, o al emprendedor de una venta, una entrega confirmada o una
+//     reseña nueva (cada notificación puede traer su propio título).
 //   • INSERT en public.messages      → avisa a la otra persona del chat.
 // Envía la notificación a todos los celulares/navegadores donde ese usuario
 // activó los avisos, y borra las suscripciones que ya no existen.
@@ -58,12 +59,13 @@ async function buildMessage(supabase: SupabaseClient, payload: WebhookPayload): 
   if (payload.table === 'notifications') {
     const link = typeof r.link === 'string' && r.link.startsWith('/') ? r.link : '/orders';
     const isSale = link.startsWith('/dashboard');
+    const customTitle = typeof r.title === 'string' && r.title.trim() ? r.title.trim() : null;
     return {
       userId: String(r.user_id),
-      title: isSale ? '\u00a1Nueva venta! \u{1F389}' : 'UniHub \u00b7 Tu pedido',
+      title: customTitle ?? (isSale ? '\u00a1Nueva venta! \u{1F389}' : 'UniHub \u00b7 Tu pedido'),
       body: String(r.message ?? 'Hay novedades en tu pedido.'),
       url: link,
-      tag: `${isSale ? 'sale' : 'order'}-${r.order_id}`,
+      tag: `${isSale ? 'sale' : 'order'}-${r.order_id}-${String(r.id ?? '').slice(0, 8)}`,
     };
   }
 

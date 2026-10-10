@@ -146,6 +146,8 @@ export interface Order {
   status: OrderStatus;
   // motivo que dejó el emprendedor si canceló el pedido (opcional)
   cancellation_reason?: string | null;
+  // cuándo el comprador confirmó "Ya recibí mi pedido" (null = aún no)
+  buyer_confirmed_at?: string | null;
   created_at: string;
   // campos derivados
   business?: Business;
@@ -188,6 +190,8 @@ export interface Notification {
   // a dónde lleva al tocarla: '/orders' (comprador) o '/dashboard/orders'
   // (venta nueva para el emprendedor). Null = '/orders'.
   link?: string | null;
+  // título propio ("Pedido recibido ✅", "Nueva reseña ⭐"…); null = el de siempre
+  title?: string | null;
 }
 
 export interface Conversation {
