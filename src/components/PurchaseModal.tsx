@@ -8,6 +8,7 @@ import { isProductOnSale, getDiscountedPrice } from '../utils/discount';
 import { orderService } from '../services/orderService';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
+import { PushOfferAfterOrder } from './PushPrompt';
 
 interface PurchaseModalProps {
   product: Product;
@@ -160,6 +161,8 @@ export function PurchaseModal({ product, variant = null, onClose }: PurchaseModa
               <Row label="Total" value={formatCOP(total)} bold />
               <Row label="Estado" value="Pendiente" />
             </div>
+
+            <PushOfferAfterOrder />
 
             <div className="mt-6 flex w-full gap-3">
               <Button variant="outline" fullWidth onClick={onClose}>

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { MessageCircle, Rocket, ShieldCheck, ShoppingBag, type LucideIcon } from 'lucide-react';
 import { BrandMark } from './BrandMark';
+import { markOnboardingSeen, onboardingSeen } from '../utils/onboarding';
 
-const STORAGE_KEY = 'unihub:onboarding-done';
 
 const SLIDES: { Icon: LucideIcon; tone: string; title: string; text: string }[] = [
   {
@@ -31,28 +31,17 @@ const SLIDES: { Icon: LucideIcon; tone: string; title: string; text: string }[] 
   },
 ];
 
-function alreadySeen(): boolean {
-  try {
-    return localStorage.getItem(STORAGE_KEY) === '1';
-  } catch {
-    return true;
-  }
-}
-
 /** Bienvenida de 4 pasos que se muestra una sola vez, la primera vez que alguien entra. */
-export function Onboarding() {
-  const [open, setOpen] = useState(() => !alreadySeen());
+export function Onboarding({ onDone }: { onDone?: () => void }) {
+  const [open, setOpen] = useState(() => !onboardingSeen());
   const [step, setStep] = useState(0);
 
   if (!open) return null;
 
   const finish = () => {
-    try {
-      localStorage.setItem(STORAGE_KEY, '1');
-    } catch {
-      // ignorar
-    }
+    markOnboardingSeen();
     setOpen(false);
+    onDone?.();
   };
 
   const slide = SLIDES[step];
