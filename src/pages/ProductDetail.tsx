@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, ShoppingBag, MapPin, MessageCircle, Share2 } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, MapPin, MessageCircle, Share2, Wallet } from 'lucide-react';
 import type { Product, ProductVariant } from '../types';
 import { CATEGORY_LABELS } from '../types';
 import { productService } from '../services/productService';
@@ -19,6 +19,7 @@ import { ProductExtras } from '../components/ProductExtras';
 import { shareLink } from '../utils/share';
 import { statsService } from '../services/statsService';
 import { useAuthGate } from '../hooks/useAuthGate';
+import { PaymentMethodChips } from '../components/PaymentMethods';
 
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -253,6 +254,16 @@ export function ProductDetail() {
               <div>
                 <p className="text-sm font-medium text-ink">Punto de encuentro</p>
                 <p className="mt-0.5 text-xs text-ink/50">Lo acuerdas por chat con el emprendedor</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2.5 rounded-card border border-ink/8 bg-white p-3.5 shadow-card">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-control bg-primary-light text-primary">
+                <Wallet size={16} />
+              </div>
+              <div className="min-w-0">
+                <p className="mb-1.5 text-sm font-medium text-ink">Formas de pago</p>
+                <PaymentMethodChips methods={business.payment_methods} />
               </div>
             </div>
           </div>

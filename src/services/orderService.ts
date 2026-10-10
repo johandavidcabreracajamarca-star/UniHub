@@ -1,5 +1,5 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
-import type { Order, OrderStatus } from '../types';
+import type { Order, OrderStatus, PaymentMethod } from '../types';
 import { demoDb } from '../data/demoDb';
 import { businessService } from './businessService';
 import { productService } from './productService';
@@ -81,6 +81,7 @@ export const orderService = {
     // pierda esa info si luego se borra o cambia esa variante.
     variant_id?: string | null;
     variant_name?: string | null;
+    payment_method?: PaymentMethod | null;
   }): Promise<{ order: Order | null; error: string | null }> {
     if (input.quantity <= 0) {
       return { order: null, error: 'La cantidad debe ser mayor a cero.' };
@@ -95,6 +96,7 @@ export const orderService = {
           business_id: input.business_id,
           total,
           status: 'pendiente',
+          ...(input.payment_method ? { payment_method: input.payment_method } : {}),
         })
         .select()
         .single();
@@ -135,6 +137,7 @@ export const orderService = {
       business_id: input.business_id,
       total,
       status: 'pendiente',
+      payment_method: input.payment_method ?? null,
       created_at: new Date().toISOString(),
       items: [
         {
@@ -185,16 +188,18 @@ export const orderService = {
   async updateStatus(orderId: string, status: OrderStatus): Promise<{ error: string | null }> {
     let buyerId: string | null = null;
     let businessName: string | null = null;
+    let paymentMethod: PaymentMethod | null = null;
 
     if (isSupabaseConfigured && supabase) {
       const { data: existing } = await supabase
         .from('orders')
-        .select('buyer_id, business:businesses(name)')
+        .select('*, business:businesses(name)')
         .eq('id', orderId)
         .single();
-      const row = existing as { buyer_id: string; business: { name: string } | null } | null;
+      const row = existing as (Order & { business: { name: string } | null }) | null;
       buyerId = row?.buyer_id ?? null;
       businessName = row?.business?.name ?? null;
+      paymentMethod = row?.payment_method ?? null;
 
       const { error } = await supabase.from('orders').update({ status }).eq('id', orderId);
       if (error) return { error: error.message };
@@ -207,6 +212,7 @@ export const orderService = {
       }
       buyerId = orders[idx].buyer_id;
       businessName = (await businessService.getById(orders[idx].business_id))?.name ?? null;
+      paymentMethod = orders[idx].payment_method ?? null;
       orders[idx] = { ...orders[idx], status };
       demoDb.saveOrders(orders);
     }
@@ -217,6 +223,7 @@ export const orderService = {
         buyer_id: buyerId,
         status,
         business_name: businessName,
+        payment_method: paymentMethod,
       });
     }
     return { error: null };

@@ -12,6 +12,7 @@ import { RowSkeleton, EmptyState, ErrorState } from '../components/StateViews';
 import { ReviewModal } from '../components/ReviewModal';
 import { Button } from '../components/Button';
 import { formatCOP } from '../utils/format';
+import { OrderPaymentInfoCard } from '../components/PaymentMethods';
 
 export function Orders() {
   const { profile } = useAuth();
@@ -156,6 +157,8 @@ export function Orders() {
                 </div>
 
                 {order.status !== 'cancelado' && <OrderProgress status={order.status} />}
+
+                <OrderPaymentInfoCard order={order} />
 
                 {order.buyer_confirmed_at && (
                   <p className="mt-3 flex items-center gap-1.5 text-xs font-medium text-green-700">

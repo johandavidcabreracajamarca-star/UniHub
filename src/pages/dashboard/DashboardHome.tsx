@@ -21,6 +21,7 @@ import { useToast } from '../../hooks/useToast';
 import type { Order, Product } from '../../types';
 import { BusinessInsights } from './BusinessInsights';
 import { PushToggle } from '../../components/PushToggle';
+import { PaymentSettings } from './PaymentSettings';
 
 export function DashboardHome() {
   const { profile } = useAuth();
@@ -395,6 +396,8 @@ export function DashboardHome() {
         </div>
         {availabilityError && <p className="mt-2 text-xs text-red-600">{availabilityError}</p>}
       </div>
+
+      <PaymentSettings business={business} onSaved={refresh} />
 
       <div className="mt-4 grid grid-cols-2 gap-3">
         <StatCard

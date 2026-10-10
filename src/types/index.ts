@@ -5,6 +5,9 @@
 
 export type UserRole = 'comprador' | 'emprendedor' | 'admin';
 
+// Medios de pago que puede aceptar un emprendimiento
+export type PaymentMethod = 'efectivo' | 'nequi' | 'daviplata' | 'transferencia';
+
 export type OrderStatus =
   | 'pendiente'
   | 'confirmado'
@@ -95,6 +98,8 @@ export interface Business {
   // no romper los datos de demo/negocios existentes.
   available_now?: boolean;
   availability_note?: string | null;
+  // cómo recibe pagos (público); los números/cuentas están aparte y son privados
+  payment_methods?: PaymentMethod[];
   // campos derivados (joins), opcionales para la UI
   university_name?: string;
   faculty_name?: string;
@@ -148,6 +153,8 @@ export interface Order {
   cancellation_reason?: string | null;
   // cuándo el comprador confirmó "Ya recibí mi pedido" (null = aún no)
   buyer_confirmed_at?: string | null;
+  // cómo va a pagar el comprador (null = lo acuerdan por chat)
+  payment_method?: PaymentMethod | null;
   created_at: string;
   // campos derivados
   business?: Business;

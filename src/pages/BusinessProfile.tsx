@@ -15,6 +15,7 @@ import { ProductGridSkeleton, EmptyState, ErrorState } from '../components/State
 import { formatDate, shortName } from '../utils/format';
 import { shareLink } from '../utils/share';
 import { useAuthGate } from '../hooks/useAuthGate';
+import { PaymentMethodChips } from '../components/PaymentMethods';
 
 export function BusinessProfile() {
   const { id } = useParams<{ id: string }>();
@@ -183,6 +184,11 @@ export function BusinessProfile() {
               <p className="mt-0.5 text-xs text-ink/50">{business.availability_note}</p>
             )}
           </div>
+        </div>
+
+        <div className="mt-3 rounded-card border border-ink/8 bg-white p-3.5 shadow-card">
+          <p className="mb-1.5 text-sm font-medium text-ink">Formas de pago</p>
+          <PaymentMethodChips methods={business.payment_methods} />
         </div>
 
         <section className="mt-7">

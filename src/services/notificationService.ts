@@ -1,7 +1,8 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
-import type { Notification, OrderStatus } from '../types';
+import type { Notification, OrderStatus, PaymentMethod } from '../types';
 import { ORDER_STATUS_LABELS } from '../types';
 import { demoDb } from '../data/demoDb';
+import { PAYMENT_METHODS, needsPaymentDetails } from '../utils/paymentMethods';
 
 function statusMessage(status: OrderStatus, reason?: string | null): string {
   if (status === 'cancelado') {
@@ -59,6 +60,7 @@ export const notificationService = {
     status: OrderStatus;
     reason?: string | null;
     business_name?: string | null;
+    payment_method?: PaymentMethod | null;
   }): Promise<void> {
     // Cuando el emprendedor marca el pedido como entregado, el aviso invita a
     // confirmar que llegó y a calificar (y lleva directo a hacerlo).
@@ -68,7 +70,11 @@ export const notificationService = {
       order_id: input.order_id,
       message: delivered
         ? `¿Cómo te fue${input.business_name ? ` con ${input.business_name}` : ''}? Confirma que lo recibiste y califícalo.`
-        : statusMessage(input.status, input.reason),
+        : input.status === 'confirmado' && needsPaymentDetails(input.payment_method)
+          ? `${input.business_name ?? 'El emprendedor'} aceptó tu pedido. Ya puedes pagar por ${
+              PAYMENT_METHODS[input.payment_method!].label
+            }: los datos están en Pedidos.`
+          : statusMessage(input.status, input.reason),
       read: false,
       ...(delivered ? { title: 'Tu pedido fue entregado 📦', link: `/orders?calificar=${input.order_id}` } : {}),
     };

@@ -12,6 +12,7 @@ import { EmptyState, RowSkeleton } from '../../components/StateViews';
 import { Select } from '../../components/Input';
 import { CancelOrderModal } from '../../components/CancelOrderModal';
 import { formatCOP, formatDateTime } from '../../utils/format';
+import { PAYMENT_METHODS } from '../../utils/paymentMethods';
 
 const ALL_STATUSES: OrderStatus[] = ['pendiente', 'confirmado', 'en_preparacion', 'completado', 'cancelado'];
 
@@ -89,6 +90,9 @@ export function DashboardOrders() {
                   {item?.variant_name && <span className="font-normal text-ink/50"> · {item.variant_name}</span>}
                 </p>
                 <p className="text-xs text-ink/50">Comprador: {order.buyer?.full_name ?? 'Estudiante'}</p>
+                {order.payment_method && (
+                  <p className="text-xs font-medium text-primary-dark">Paga con {PAYMENT_METHODS[order.payment_method].label}</p>
+                )}
                 <p className="text-xs text-ink/40">
                   {item ? `Cantidad: ${item.quantity}` : ''} · {formatDateTime(order.created_at)}
                 </p>

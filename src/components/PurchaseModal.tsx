@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Minus, Plus, CheckCircle2 } from 'lucide-react';
-import type { Product, ProductVariant } from '../types';
+import type { PaymentMethod, Product, ProductVariant } from '../types';
 import { Button } from './Button';
 import { formatCOP } from '../utils/format';
 import { isProductOnSale, getDiscountedPrice } from '../utils/discount';
@@ -9,6 +9,7 @@ import { orderService } from '../services/orderService';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
 import { PushOfferAfterOrder } from './PushPrompt';
+import { PAYMENT_METHODS, PAYMENT_METHOD_ORDER, needsPaymentDetails } from '../utils/paymentMethods';
 
 interface PurchaseModalProps {
   product: Product;
@@ -29,6 +30,9 @@ export function PurchaseModal({ product, variant = null, onClose }: PurchaseModa
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Medios que acepta el emprendimiento; si no configuró ninguno, se acuerda por chat
+  const acceptedMethods = PAYMENT_METHOD_ORDER.filter((m) => product.business?.payment_methods?.includes(m));
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(acceptedMethods[0] ?? null);
 
   // Si el producto está en oferta, el comprador paga el precio con
   // descuento — mostrarlo tachado en la tarjeta no serviría de nada si al
@@ -52,6 +56,7 @@ export function PurchaseModal({ product, variant = null, onClose }: PurchaseModa
       unit_price: unitPrice,
       variant_id: variant?.id ?? null,
       variant_name: variant?.name ?? null,
+      payment_method: paymentMethod,
     });
     setLoading(false);
     if (error) {
@@ -130,10 +135,43 @@ export function PurchaseModal({ product, variant = null, onClose }: PurchaseModa
               <Row label="Total" value={formatCOP(total)} bold />
             </div>
 
+            <p className="mb-2 mt-4 text-sm font-semibold text-ink">¿Cómo vas a pagar?</p>
+            {acceptedMethods.length === 0 ? (
+              <p className="rounded-card bg-surface p-3 text-xs text-ink/60">
+                Este emprendimiento todavía no indicó sus medios de pago. Acuerden el pago por el chat.
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {acceptedMethods.map((m) => {
+                  const { label, hint, Icon } = PAYMENT_METHODS[m];
+                  const on = paymentMethod === m;
+                  return (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setPaymentMethod(m)}
+                      aria-pressed={on}
+                      className={`flex items-center gap-2 rounded-control border p-2.5 text-left transition-colors ${
+                        on ? 'border-primary bg-primary-light' : 'border-ink/12 bg-white'
+                      }`}
+                    >
+                      <Icon size={18} className={on ? 'text-primary' : 'text-ink/40'} />
+                      <span className="min-w-0">
+                        <span className={`block text-sm font-semibold ${on ? 'text-primary-dark' : 'text-ink'}`}>{label}</span>
+                        <span className="block truncate text-[11px] text-ink/45">{hint}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
             <p className="mt-4 text-center text-xs text-ink/40">
-              Este MVP no procesa pagos en línea. Coordina la entrega directamente con el emprendedor.
+              {needsPaymentDetails(paymentMethod)
+                ? 'Cuando el emprendedor acepte tu pedido, verás en Pedidos los datos para pagar.'
+                : 'UniHub no cobra ni procesa pagos: le pagas directamente al emprendedor.'}
             </p>
 
             <div className="mt-5 flex gap-3">
@@ -159,6 +197,7 @@ export function PurchaseModal({ product, variant = null, onClose }: PurchaseModa
               <Row label="Emprendimiento" value={product.business?.name ?? '—'} />
               <Row label="Cantidad" value={String(quantity)} />
               <Row label="Total" value={formatCOP(total)} bold />
+              {paymentMethod && <Row label="Pago" value={PAYMENT_METHODS[paymentMethod].label} />}
               <Row label="Estado" value="Pendiente" />
             </div>
 

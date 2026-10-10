@@ -122,6 +122,7 @@ export const demoBusinesses: Business[] = [
     rating: 4.8,
     review_count: 32,
     created_at: '2025-11-03T10:00:00Z',
+    payment_methods: ['efectivo', 'nequi'],
   },
   {
     id: 'biz-tech-campus',
