@@ -1,6 +1,7 @@
 import { AbsoluteFill, Audio, Series, interpolate, staticFile, useVideoConfig } from 'remotion';
 import { C, SCENES } from './theme';
 import { CategoriesScene, CtaScene, ExploreScene, HookScene, LogoScene, QuestionScene, SellerScene, TrustScene } from './scenes';
+import { ChatScene, NotificationsScene, ShareScene } from './featureScenes';
 
 export function Promo() {
   const { durationInFrames } = useVideoConfig();
@@ -26,8 +27,17 @@ export function Promo() {
         <Series.Sequence durationInFrames={SCENES.categories}>
           <CategoriesScene />
         </Series.Sequence>
+        <Series.Sequence durationInFrames={SCENES.chat}>
+          <ChatScene />
+        </Series.Sequence>
+        <Series.Sequence durationInFrames={SCENES.notifications}>
+          <NotificationsScene />
+        </Series.Sequence>
         <Series.Sequence durationInFrames={SCENES.trust}>
           <TrustScene />
+        </Series.Sequence>
+        <Series.Sequence durationInFrames={SCENES.share}>
+          <ShareScene />
         </Series.Sequence>
         <Series.Sequence durationInFrames={SCENES.seller}>
           <SellerScene />

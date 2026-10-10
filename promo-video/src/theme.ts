@@ -24,15 +24,20 @@ export const { fontFamily } = loadFont('normal', {
 export const FPS = 30;
 
 // Duración de cada escena (en frames)
+// Todas son múltiplos de 15 frames (medio beat a 120 BPM) para que los
+// cortes caigan en el ritmo de la música.
 export const SCENES = {
   hook: 105,
-  question: 105,
-  logo: 115,
-  explore: 185,
-  categories: 120,
-  trust: 155,
-  seller: 160,
-  cta: 165,
+  question: 90,
+  logo: 120,
+  explore: 165,
+  categories: 105,
+  chat: 150,
+  notifications: 165,
+  trust: 135,
+  share: 135,
+  seller: 165,
+  cta: 180,
 };
 
 export const TOTAL = Object.values(SCENES).reduce((a, b) => a + b, 0);

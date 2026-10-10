@@ -6,7 +6,10 @@ import {
   Cake,
   Cookie,
   Cpu,
+  Download,
+  Eye,
   GraduationCap,
+  Heart,
   Laptop,
   Mail,
   Palette,
@@ -125,7 +128,7 @@ export function QuestionScene() {
       </div>
     );
   };
-  const appear = useSpr(52, { damping: 12 });
+  const appear = useSpr(42, { damping: 12 });
   return (
     <Scene duration={SCENES.question}>
       <PaperBackground />
@@ -237,8 +240,8 @@ const PRODUCTS = [
 export function ExploreScene() {
   const frame = useCurrentFrame();
   const phone = useSpr(10, { damping: 16, stiffness: 80 });
-  const scroll = interpolate(frame, [85, 150], [0, 330], { ...clamp, easing: Easing.inOut(Easing.cubic) });
-  const tagP = useSpr(110, { damping: 11 });
+  const scroll = interpolate(frame, [70, 135], [0, 560], { ...clamp, easing: Easing.inOut(Easing.cubic) });
+  const tagP = useSpr(100, { damping: 11 });
   return (
     <Scene duration={SCENES.explore}>
       <PaperBackground />
@@ -303,9 +306,40 @@ export function ExploreScene() {
                 );
               })}
             </div>
+            <div style={{ margin: '30px 30px 0' }}>
+              <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: -0.5 }}>Destacados de la semana</div>
+              <div style={{ fontSize: 19, color: 'rgba(36,32,51,0.5)', marginTop: 2 }}>Los mejor calificados y los nuevos en la U</div>
+              <div style={{ display: 'flex', gap: 18, marginTop: 16 }}>
+                {[
+                  { name: 'Dulce EAN', rating: '4.8', Icon: Cake, bg: C.accentLight, fg: C.accentDark, isNew: true },
+                  { name: 'Tech Campus', rating: '4.6', Icon: Cpu, bg: C.primaryLight, fg: C.primary, isNew: false },
+                ].map((b, i) => {
+                  const s = useSpr(22 + i * 6, { damping: 14, stiffness: 120 });
+                  return (
+                    <div
+                      key={b.name}
+                      style={{ flex: 1, background: 'white', borderRadius: 24, overflow: 'hidden', boxShadow: '0 6px 18px rgba(36,32,51,0.08)', transform: `scale(${0.85 + 0.15 * s})`, opacity: Math.min(1, s * 1.4) }}
+                    >
+                      <div style={{ position: 'relative', height: 110, background: b.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <b.Icon size={48} color={b.fg} strokeWidth={1.6} />
+                        {b.isNew && (
+                          <span style={{ position: 'absolute', left: 0, top: 12, background: C.accent, color: C.ink, fontSize: 16, fontWeight: 800, padding: '4px 12px', borderRadius: '0 10px 10px 0' }}>
+                            Nuevo
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ padding: '12px 16px' }}>
+                        <div style={{ fontSize: 22, fontWeight: 700 }}>{b.name}</div>
+                        <div style={{ fontSize: 19, color: 'rgba(36,32,51,0.6)', marginTop: 2 }}>★ {b.rating}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, margin: '26px 30px 0' }}>
               {PRODUCTS.map((p, i) => {
-                const s = useSpr(28 + i * 6, { damping: 14, stiffness: 120 });
+                const s = useSpr(34 + i * 5, { damping: 14, stiffness: 120 });
                 return (
                   <ProductTile
                     key={p.name}
@@ -417,11 +451,11 @@ export function CategoriesScene() {
 export function TrustScene() {
   const frame = useCurrentFrame();
   const cardP = useSpr(14, { damping: 15, stiffness: 100 });
-  const badge = useSpr(40, { damping: 8, stiffness: 160 });
-  const starsP = interpolate(frame, [50, 80], [0, 1], clamp);
-  const rating = interpolate(frame, [50, 80], [0, 4.9], clamp);
-  const bubble = useSpr(82, { damping: 13 });
-  const mail = useSpr(100, { damping: 13 });
+  const badge = useSpr(34, { damping: 8, stiffness: 160 });
+  const starsP = interpolate(frame, [42, 68], [0, 1], clamp);
+  const rating = interpolate(frame, [42, 68], [0, 4.9], clamp);
+  const bubble = useSpr(70, { damping: 13 });
+  const mail = useSpr(86, { damping: 13 });
   return (
     <Scene duration={SCENES.trust}>
       <PaperBackground />
@@ -520,16 +554,26 @@ export function TrustScene() {
 /* ------------------------------------------------------------------ */
 export function SellerScene() {
   const frame = useCurrentFrame();
-  const dash = useSpr(30, { damping: 16, stiffness: 90 });
-  const count = interpolate(frame, [45, 105], [0, 1240000], { ...clamp, easing: Easing.out(Easing.cubic) });
-  const orders = Math.round(interpolate(frame, [45, 105], [0, 38], { ...clamp, easing: Easing.out(Easing.cubic) }));
+  const dash = useSpr(26, { damping: 16, stiffness: 90 });
+  const ease = { ...clamp, easing: Easing.out(Easing.cubic) };
+  const sales = interpolate(frame, [40, 95], [0, 1240000], ease);
+  const visits = Math.round(interpolate(frame, [40, 95], [0, 186], ease));
+  const favorites = Math.round(interpolate(frame, [40, 95], [0, 24], ease));
   const toast = useSpr(100, { damping: 13, stiffness: 130 });
-  const bars = [0.35, 0.5, 0.42, 0.65, 0.58, 0.82, 1];
+  const days = [
+    { d: 'V', v: 0.42 },
+    { d: 'S', v: 0.3 },
+    { d: 'D', v: 0.25 },
+    { d: 'L', v: 0.62 },
+    { d: 'M', v: 0.55 },
+    { d: 'X', v: 0.8 },
+    { d: 'J', v: 1 },
+  ];
   return (
     <Scene duration={SCENES.seller} bg={C.secondary}>
       <AbsoluteFill style={{ background: `radial-gradient(circle at 85% 8%, rgba(105,65,217,0.75), transparent 60%), radial-gradient(circle at 0% 100%, rgba(255,128,108,0.25), transparent 50%)` }} />
       <Grain opacity={0.1} />
-      <div style={{ position: 'absolute', top: 170, left: PAD, right: PAD }}>
+      <div style={{ position: 'absolute', top: 150, left: PAD, right: PAD }}>
         <Reveal delay={0}>
           <Headline size={96} color="white">
             ¿Tienes un
@@ -540,9 +584,9 @@ export function SellerScene() {
             emprendimiento?
           </Headline>
         </Reveal>
-        <Reveal delay={18}>
-          <Headline size={96} color={C.accent} style={{ marginTop: 16 }}>
-            Hazlo crecer aquí.
+        <Reveal delay={16}>
+          <Headline size={96} color={C.accent} style={{ marginTop: 12 }}>
+            Mira cómo crece.
           </Headline>
         </Reveal>
       </div>
@@ -550,46 +594,60 @@ export function SellerScene() {
       <div
         style={{
           position: 'absolute',
-          top: 760,
+          top: 720,
           left: PAD,
           right: PAD,
           background: C.surface,
           borderRadius: 48,
-          padding: 52,
-          transform: `translateY(${(1 - dash) * 700}px)`,
+          padding: '46px 48px',
+          transform: `translateY(${(1 - dash) * 800}px)`,
           boxShadow: '0 50px 100px rgba(0,0,0,0.35)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 30, fontWeight: 600, color: 'rgba(36,32,51,0.6)' }}>
-          <TrendingUp size={32} color={C.primary} /> Ventas del mes
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <div style={{ fontFamily: serif, fontSize: 46, fontWeight: 600 }}>Cómo te va esta semana</div>
+          <div style={{ fontSize: 24, color: 'rgba(36,32,51,0.45)' }}>7 días</div>
         </div>
-        <div style={{ fontSize: 112, fontWeight: 900, letterSpacing: -4, marginTop: 6 }}>{formatCOP(count)}</div>
-        <div style={{ display: 'flex', gap: 22, marginTop: 30 }}>
-          {[
-            ['Pedidos', String(orders), C.accentDark],
-            ['Productos', '12', C.primary],
-            ['Calificación', '4.9', C.ink],
-          ].map(([label, value, color]) => (
-            <div key={label} style={{ flex: 1, background: 'white', borderRadius: 28, padding: '24px 26px' }}>
-              <div style={{ fontSize: 24, color: 'rgba(36,32,51,0.55)', fontWeight: 600 }}>{label}</div>
-              <div style={{ fontSize: 56, fontWeight: 900, color }}>{value}</div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 28, fontWeight: 600, color: 'rgba(36,32,51,0.6)', marginTop: 26 }}>
+          <TrendingUp size={30} color={C.primary} /> Ventas del mes
+        </div>
+        <div style={{ fontSize: 100, fontWeight: 900, letterSpacing: -4, lineHeight: 1.05 }}>{formatCOP(sales)}</div>
+
+        <div style={{ display: 'flex', gap: 20, marginTop: 26 }}>
+          <div style={{ flex: 1, background: C.primaryLight, borderRadius: 28, padding: '22px 26px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 24, fontWeight: 600, color: C.primaryDark }}>
+              <Eye size={24} /> Visitas
             </div>
-          ))}
+            <div style={{ fontSize: 60, fontWeight: 900 }}>{visits}</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: '#15803d' }}>↑ 13% vs. semana pasada</div>
+          </div>
+          <div style={{ flex: 1, background: C.accentLight, borderRadius: 28, padding: '22px 26px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 24, fontWeight: 600, color: C.accentDark }}>
+              <Heart size={24} /> En favoritos
+            </div>
+            <div style={{ fontSize: 60, fontWeight: 900 }}>{favorites}</div>
+            <div style={{ fontSize: 22, color: 'rgba(36,32,51,0.55)' }}>estudiantes te siguen</div>
+          </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 18, height: 260, marginTop: 40 }}>
-          {bars.map((b, i) => {
-            const g = interpolate(frame, [50 + i * 5, 80 + i * 5], [0, 1], { ...clamp, easing: Easing.out(Easing.back(1.6)) });
+
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16, height: 220, marginTop: 34 }}>
+          {days.map((day, i) => {
+            const g = interpolate(frame, [48 + i * 5, 76 + i * 5], [0, 1], { ...clamp, easing: Easing.out(Easing.back(1.6)) });
+            const today = i === days.length - 1;
             return (
-              <div
-                key={i}
-                style={{
-                  flex: 1,
-                  height: `${b * g * 100}%`,
-                  borderRadius: 16,
-                  background: i === bars.length - 1 ? C.accent : C.primary,
-                  opacity: i === bars.length - 1 ? 1 : 0.35 + i * 0.1,
-                }}
-              />
+              <div key={i} style={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', gap: 8 }}>
+                <div
+                  style={{
+                    width: '100%',
+                    height: `${day.v * g * 82}%`,
+                    borderRadius: 14,
+                    background: today ? C.accent : C.primary,
+                    opacity: today ? 1 : 0.4 + i * 0.08,
+                  }}
+                />
+                <span style={{ fontSize: 22, fontWeight: today ? 800 : 500, color: today ? C.ink : 'rgba(36,32,51,0.45)' }}>{day.d}</span>
+              </div>
             );
           })}
         </div>
@@ -598,7 +656,7 @@ export function SellerScene() {
       <div
         style={{
           position: 'absolute',
-          top: 640,
+          top: 600,
           left: PAD + 20,
           right: PAD + 20,
           display: 'flex',
@@ -613,11 +671,11 @@ export function SellerScene() {
         }}
       >
         <div style={{ width: 84, height: 84, borderRadius: 24, background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <Bell size={44} color={C.ink} style={{ transform: `rotate(${Math.sin(frame / 2) * 14 * Math.max(0, 1 - (frame - 100) / 30)}deg)` }} />
+          <Store size={42} color={C.ink} style={{ transform: `rotate(${Math.sin(frame / 2) * 12 * Math.max(0, 1 - (frame - 100) / 30)}deg)` }} />
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 32, fontWeight: 800 }}>¡Nuevo pedido!</div>
-          <div style={{ fontSize: 26, color: 'rgba(36,32,51,0.6)' }}>Caja de 6 cupcakes · {formatCOP(24000)}</div>
+          <div style={{ fontSize: 32, fontWeight: 800 }}>¡Nueva venta! 🎉</div>
+          <div style={{ fontSize: 26, color: 'rgba(36,32,51,0.6)' }}>Yohan te pidió 2 × Brownie · {formatCOP(11000)}</div>
         </div>
       </div>
     </Scene>
@@ -645,7 +703,7 @@ export function CtaScene() {
         <div style={{ transform: `scale(${logo}) rotate(${(1 - logo) * 20}deg)` }}>
           <LogoMark size={250} />
         </div>
-        <Reveal delay={12} style={{ marginTop: 70 }}>
+        <Reveal delay={12} style={{ marginTop: 56 }}>
           <Headline size={136}>Únete a</Headline>
         </Reveal>
         <Reveal delay={18}>
@@ -688,7 +746,7 @@ export function CtaScene() {
         </div>
         <div
           style={{
-            marginTop: 70,
+            marginTop: 60,
             transform: `scale(${btn * pulse})`,
             background: `linear-gradient(135deg, ${C.primary}, ${C.primaryDark})`,
             color: 'white',
@@ -718,8 +776,26 @@ export function CtaScene() {
             }}
           />
         </div>
-        <Reveal delay={56}>
-          <div style={{ fontSize: 30, color: 'rgba(36,32,51,0.5)', marginTop: 40, fontWeight: 500 }}>
+        <Reveal delay={50}>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 14,
+              marginTop: 40,
+              background: C.primaryLight,
+              color: C.primaryDark,
+              borderRadius: 99,
+              padding: '18px 30px',
+              fontSize: 30,
+              fontWeight: 700,
+            }}
+          >
+            <Download size={30} /> Gratis · instálala en tu pantalla de inicio
+          </div>
+        </Reveal>
+        <Reveal delay={60}>
+          <div style={{ fontSize: 30, color: 'rgba(36,32,51,0.5)', marginTop: 28, fontWeight: 500 }}>
             Comenzando en <b style={{ color: C.primary }}>Universidad EAN</b> · usa tu correo institucional
           </div>
         </Reveal>

@@ -6,8 +6,10 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 const SR = 44100;
 const BPM = 120;
 const BEAT = 60 / BPM;
-const DURATION = 37.2;
-const DROP = 7; // segundos — entrada del logo (frame 210)
+const DURATION = 51.2;
+const DROP = 6.5; // segundos — entrada del logo (frame 195)
+const CTA = 44.5; // segundos — llamado a la acción (frame 1335)
+const END_BEAT = 48; // la batería se detiene y suena el acorde final
 const N = Math.floor(SR * DURATION);
 const L = new Float32Array(N);
 const R = new Float32Array(N);
@@ -159,8 +161,7 @@ const CL = clap();
 for (let bar = 0; bar < totalBars; bar++) {
   const t = bar * BAR;
   const ci = bar % 4;
-  const afterDrop = t >= DROP - 0.01;
-  const finalBar = t >= 34;
+  const afterDrop = t + BAR > DROP;
   add(t, pad(CHORDS[ci].map(midi), BAR + 0.5, afterDrop), afterDrop ? 0.22 : 0.26);
 
   // Arpegio en corcheas
@@ -170,13 +171,17 @@ for (let bar = 0; bar < totalBars; bar++) {
     add(t + s * (BEAT / 2), pluck(midi(note)), afterDrop ? 0.11 : 0.09, s % 2 ? 0.35 : -0.35);
   });
 
-  if (afterDrop && !finalBar) {
-    add(t, bass(midi(BASS[ci]), BAR * 0.98), 0.28);
+  // Bajo y batería desde el drop (aunque caiga a mitad de compás) hasta el final
+  if (t < END_BEAT && t + BAR > DROP) {
+    const bassStart = Math.max(t, DROP);
+    add(bassStart, bass(midi(BASS[ci]), t + BAR * 0.98 - bassStart), 0.28);
     for (let b = 0; b < 4; b++) {
-      add(t + b * BEAT, K, 0.55);
-      if (b % 2 === 1) add(t + b * BEAT, CL, 0.32, 0.1);
-      add(t + b * BEAT + BEAT / 2, hat(b === 3), 0.12, 0.4);
-      add(t + b * BEAT, hat(), 0.06, -0.4);
+      const tb = t + b * BEAT;
+      if (tb < DROP - 0.01 || tb >= END_BEAT) continue;
+      add(tb, K, 0.55);
+      if (b % 2 === 1) add(tb, CL, 0.32, 0.1);
+      add(tb + BEAT / 2, hat(b === 3), 0.12, 0.4);
+      add(tb, hat(), 0.06, -0.4);
     }
   }
 }
@@ -185,9 +190,63 @@ for (let bar = 0; bar < totalBars; bar++) {
 add(DROP - 2, riser(2), 0.25);
 add(DROP, impact(), 0.5);
 add(DROP, CL, 0.2);
-// Golpe final en el CTA
-add(31.5, impact(), 0.35);
-add(34, pad([...CHORDS[0], 65, 72].map(midi), 3.2, true), 0.25);
+// Golpe en el CTA y acorde final
+add(CTA, impact(), 0.35);
+add(END_BEAT, pad([...CHORDS[0], 65, 72].map(midi), 3.2, true), 0.25);
+
+// ---------------------------------------------------------------------------
+// Efectos de sonido, sincronizados con las escenas (frame / 30 = segundo)
+// ---------------------------------------------------------------------------
+// "Pop" suave: burbuja de chat o mensaje que aparece
+function pop() {
+  const n = Math.floor(0.12 * SR);
+  const out = new Float32Array(n);
+  let ph = 0;
+  for (let i = 0; i < n; i++) {
+    const t = i / SR;
+    ph += (520 + 700 * Math.exp(-t * 45)) / SR;
+    out[i] = Math.sin(2 * Math.PI * ph) * Math.exp(-t * 32) * Math.min(1, i / 40);
+  }
+  return out;
+}
+
+// Campanita: tonos tipo xilófono (para avisos y la venta)
+function chime(notes, spacing = 0.09) {
+  const n = Math.floor((notes.length * spacing + 0.9) * SR);
+  const out = new Float32Array(n);
+  notes.forEach((m, k) => {
+    const f = midi(m);
+    const s0 = Math.floor(k * spacing * SR);
+    for (let i = 0; s0 + i < n; i++) {
+      const t = i / SR;
+      const env = Math.exp(-t * 7) * Math.min(1, i / 30);
+      out[s0 + i] += env * (Math.sin(2 * Math.PI * f * t) + 0.25 * Math.sin(2 * Math.PI * f * 2.76 * t) * Math.exp(-t * 14));
+    }
+  });
+  return out;
+}
+
+// Toque en la pantalla
+function tap() {
+  const n = Math.floor(0.05 * SR);
+  const out = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const t = i / SR;
+    out[i] = (Math.sin(2 * Math.PI * 1800 * t) * 0.6 + rand() * 0.4) * Math.exp(-t * 90);
+  }
+  return out;
+}
+
+// Chat (escena desde frame 585): burbujas en los frames 18, 60 y 90
+[603, 645, 675].forEach((f) => add(f / 30, pop(), 0.22, 0.2));
+// Avisos al celular (desde frame 735): cada aviso en los frames 24, 58 y 92
+[759, 793, 827].forEach((f, i) => add(f / 30, chime([88, 93]), 0.16, i % 2 ? 0.25 : -0.25));
+// Compartir (desde frame 1035): toque en el botón, mensaje y respuesta
+add(1073 / 30, tap(), 0.25);
+add(1085 / 30, pop(), 0.22, -0.2);
+add(1119 / 30, pop(), 0.2, 0.2);
+// ¡Nueva venta! en el panel del emprendedor (frame 1270)
+add(1270 / 30, chime([84, 88, 91, 96], 0.07), 0.18);
 
 // Reverb simple (combs en paralelo) para dar espacio
 function reverb(buf, mix) {
