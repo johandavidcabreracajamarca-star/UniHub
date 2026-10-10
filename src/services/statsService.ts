@@ -49,13 +49,13 @@ function loadDemoViews(): (ViewRow & { business_id: string; viewer_id: string })
 export const statsService = {
   async recordProductView(input: { productId: string; businessId: string; viewerId: string }): Promise<void> {
     if (isSupabaseConfigured && supabase) {
-      // "ignoreDuplicates": si ya la vio hoy, no pasa nada
+      // Insert normal, no upsert: el "on conflict" de un upsert le exige a
+      // Postgres poder leer la fila, y el visitante no puede leer las visitas
+      // (solo el dueño), así que el upsert siempre era rechazado.
+      // Si ya la vio hoy, la restricción única falla (23505) y no pasa nada.
       await supabase
         .from('product_views')
-        .upsert(
-          { product_id: input.productId, business_id: input.businessId, viewer_id: input.viewerId },
-          { onConflict: 'product_id,viewer_id,view_date', ignoreDuplicates: true }
-        );
+        .insert({ product_id: input.productId, business_id: input.businessId, viewer_id: input.viewerId });
       return;
     }
     const rows = loadDemoViews();
