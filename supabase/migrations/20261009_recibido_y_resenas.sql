@@ -43,7 +43,7 @@ begin
     return; -- ya estaba confirmado
   end if;
   if v_order.status::text not in ('confirmado', 'en_preparacion', 'completado') then
-    raise exception U&'Podr\00E1s confirmarlo cuando el emprendedor acepte tu pedido.';
+    raise exception '%', U&'Podr\00E1s confirmarlo cuando el emprendedor acepte tu pedido.';
   end if;
 
   -- Permiso para que la regla trg_guard_order_update deje pasar este cambio
@@ -97,11 +97,11 @@ begin
     -- Solo confirm_order_received puede marcar la confirmación del comprador
     if new.buyer_confirmed_at is distinct from old.buyer_confirmed_at
        and coalesce(current_setting('unihub.confirming_receipt', true), '') <> 'on' then
-      raise exception U&'Solo el comprador puede confirmar que recibi\00F3 el pedido.';
+      raise exception '%', U&'Solo el comprador puede confirmar que recibi\00F3 el pedido.';
     end if;
     -- Si el comprador ya confirmó, el pedido queda cerrado
     if old.buyer_confirmed_at is not null and new.status is distinct from old.status then
-      raise exception U&'El comprador ya confirm\00F3 que recibi\00F3 este pedido.';
+      raise exception '%', U&'El comprador ya confirm\00F3 que recibi\00F3 este pedido.';
     end if;
   end if;
   return new;
