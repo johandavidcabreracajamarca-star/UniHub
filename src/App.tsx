@@ -3,6 +3,7 @@ import { AuthProvider } from './hooks/useAuth';
 import { ToastProvider } from './hooks/useToast';
 import { AppLayout } from './components/AppLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { AuthGateProvider } from './hooks/useAuthGate';
 
 import { Welcome } from './pages/Welcome';
 import { Login } from './pages/Login';
@@ -35,6 +36,7 @@ function App() {
     <AuthProvider>
       <ToastProvider>
         <BrowserRouter>
+          <AuthGateProvider>
           <Routes>
             {/* Público */}
             <Route path="/" element={<Welcome />} />
@@ -42,13 +44,18 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
 
+            {/* Público: se puede explorar sin cuenta. Comprar, chatear y guardar
+                favoritos piden registrarse (ver hooks/useAuthGate.tsx) */}
+            <Route element={<AppLayout />}>
+              <Route path="/explore" element={<Explore />} />
+              <Route path="/search" element={<SearchPage />} />
+              <Route path="/product/:id" element={<ProductDetail />} />
+              <Route path="/business/:id" element={<BusinessProfile />} />
+            </Route>
+
             {/* Autenticado */}
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
-                <Route path="/explore" element={<Explore />} />
-                <Route path="/search" element={<SearchPage />} />
-                <Route path="/product/:id" element={<ProductDetail />} />
-                <Route path="/business/:id" element={<BusinessProfile />} />
                 <Route path="/orders" element={<Orders />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/favorites" element={<FavoritosPage />} />
@@ -87,6 +94,7 @@ function App() {
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          </AuthGateProvider>
         </BrowserRouter>
       </ToastProvider>
     </AuthProvider>

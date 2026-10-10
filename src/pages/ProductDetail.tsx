@@ -18,11 +18,13 @@ import { useAuth } from '../hooks/useAuth';
 import { ProductExtras } from '../components/ProductExtras';
 import { shareLink } from '../utils/share';
 import { statsService } from '../services/statsService';
+import { useAuthGate } from '../hooks/useAuthGate';
 
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const { requireAuth } = useAuthGate();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -97,10 +99,7 @@ export function ProductDetail() {
 
   const handleChat = async () => {
     if (!business) return;
-    if (!profile) {
-      navigate('/login');
-      return;
-    }
+    if (!requireAuth(`escribirle a ${business.name}`) || !profile) return;
     setChatLoading(true);
     const { conversation, error: chatError } = await chatService.getOrCreate(profile.id, business.id);
     setChatLoading(false);
@@ -272,10 +271,7 @@ export function ProductDetail() {
           fullWidth
           disabled={!canBuy || Boolean(isOwnBusiness)}
           onClick={() => {
-            if (!profile) {
-              navigate('/login');
-              return;
-            }
+            if (!requireAuth('hacer tu pedido')) return;
             setShowPurchase(true);
           }}
         >

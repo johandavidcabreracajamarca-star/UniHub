@@ -1,3 +1,27 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    {
+      "source": "/product/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(WhatsApp|facebookexternalhit|Facebot|Twitterbot|TelegramBot|Slackbot|Discordbot|LinkedInBot|Pinterest|SkypeUriPreview|Applebot|Googlebot|bingbot|redditbot|Embedly|vkShare|Iframely|Snapchat).*"
+        }
+      ],
+      "destination": "/api/preview?type=product&id=:id"
+    },
+    {
+      "source": "/business/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(WhatsApp|facebookexternalhit|Facebot|Twitterbot|TelegramBot|Slackbot|Discordbot|LinkedInBot|Pinterest|SkypeUriPreview|Applebot|Googlebot|bingbot|redditbot|Embedly|vkShare|Iframely|Snapchat).*"
+        }
+      ],
+      "destination": "/api/preview?type=business&id=:id"
+    },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
 }

@@ -8,10 +8,12 @@ import { StarRating } from './StarRating';
 import { CATEGORY_LABELS } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { favoriteService } from '../services/favoriteService';
+import { useAuthGate } from '../hooks/useAuthGate';
 
 export function BusinessCard({ business }: { business: Business }) {
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const { requireAuth } = useAuthGate();
   // Preferimos el logo; si no hay, probamos la foto de portada; si tampoco
   // hay (o la URL falla al cargar), caemos al ícono genérico de categoría.
   const logo = business.logo?.trim() || null;
@@ -33,7 +35,7 @@ export function BusinessCard({ business }: { business: Business }) {
 
   const toggleFavorite = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!profile || busy) return;
+    if (busy || !requireAuth('guardar tus favoritos') || !profile) return;
     setBusy(true);
     const next = !isFavorite;
     setIsFavorite(next); // optimista

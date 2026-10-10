@@ -59,6 +59,12 @@ export function Welcome() {
             <Button size="lg" fullWidth variant="outline" onClick={() => navigate('/register')}>
               Crear cuenta
             </Button>
+            <button
+              onClick={() => navigate('/explore')}
+              className="mt-1 h-11 text-sm font-semibold text-primary hover:underline"
+            >
+              Explorar sin cuenta →
+            </button>
           </div>
 
           <p className="mt-6 text-center text-xs text-ink/40">

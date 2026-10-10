@@ -23,13 +23,22 @@ export function HomeHeader() {
         <div className="flex items-center gap-1.5">
           <MessagesIcon tone="light" />
           <NotificationBell tone="light" />
-          <button
-            onClick={() => navigate('/profile')}
-            aria-label="Mi perfil"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-surface text-sm font-semibold text-primary"
-          >
-            {profile?.full_name?.[0]?.toUpperCase() ?? <User size={16} />}
-          </button>
+          {profile ? (
+            <button
+              onClick={() => navigate('/profile')}
+              aria-label="Mi perfil"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-surface text-sm font-semibold text-primary"
+            >
+              {profile.full_name?.[0]?.toUpperCase() ?? <User size={16} />}
+            </button>
+          ) : (
+            <button
+              onClick={() => navigate('/login')}
+              className="flex h-10 items-center rounded-full bg-surface px-4 text-sm font-semibold text-primary"
+            >
+              Entrar
+            </button>
+          )}
         </div>
       </div>
 

@@ -125,6 +125,11 @@ export function Login() {
             Crear cuenta
           </Link>
         </p>
+        <p className="mt-3 text-center text-sm">
+          <Link to="/explore" className="font-medium text-ink/50 hover:text-ink">
+            Seguir explorando sin cuenta →
+          </Link>
+        </p>
       </div>
     </div>
   );

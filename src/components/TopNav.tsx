@@ -27,7 +27,9 @@ export function TopNav() {
         </button>
 
         <nav className="flex items-center gap-1">
-          {items.map(({ to, label, icon: Icon }) => (
+          {items
+            .filter(({ to }) => profile || to !== '/orders')
+            .map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
@@ -43,6 +45,22 @@ export function TopNav() {
           ))}
         </nav>
 
+        {!profile ? (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate('/login')}
+              className="rounded-control px-3.5 py-2 text-sm font-semibold text-ink/70 hover:bg-ink/5"
+            >
+              Iniciar sesión
+            </button>
+            <button
+              onClick={() => navigate('/register')}
+              className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark"
+            >
+              Crear cuenta
+            </button>
+          </div>
+        ) : (
         <div className="flex items-center gap-2">
           <MessagesIcon />
           <NotificationBell />
@@ -58,6 +76,7 @@ export function TopNav() {
             </span>
           </button>
         </div>
+        )}
       </div>
     </header>
   );

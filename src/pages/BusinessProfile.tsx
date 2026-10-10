@@ -14,11 +14,13 @@ import { ProductCard } from '../components/ProductCard';
 import { ProductGridSkeleton, EmptyState, ErrorState } from '../components/StateViews';
 import { formatDate, shortName } from '../utils/format';
 import { shareLink } from '../utils/share';
+import { useAuthGate } from '../hooks/useAuthGate';
 
 export function BusinessProfile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const { requireAuth } = useAuthGate();
 
   const [business, setBusiness] = useState<Business | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -55,7 +57,8 @@ export function BusinessProfile() {
   }, [id]);
 
   const handleAsk = async () => {
-    if (!business || !profile || askingLoading) return;
+    if (!business || askingLoading) return;
+    if (!requireAuth(`escribirle a ${business.name}`) || !profile) return;
     setAskingLoading(true);
     const { conversation, error } = await chatService.getOrCreate(profile.id, business.id);
     setAskingLoading(false);
