@@ -97,6 +97,15 @@ export function ProductForm() {
   const [useVariants, setUseVariants] = useState(false);
   const [variantRows, setVariantRows] = useState<VariantRow[]>([]);
 
+  // Un producto nuevo arranca con la categoría del emprendimiento (antes salía
+  // "Otros" y muchos no la cambiaban, así que no aparecía al filtrar).
+  const categoryFromBusiness = useRef(false);
+  useEffect(() => {
+    if (isEditing || !business || categoryFromBusiness.current) return;
+    categoryFromBusiness.current = true;
+    setCategory(business.category);
+  }, [isEditing, business]);
+
   useEffect(() => {
     if (!isEditing || !id) return;
     productService.getById(id).then((product) => {

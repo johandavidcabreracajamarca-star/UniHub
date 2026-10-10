@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
-import { Package, ClipboardList, DollarSign, Star, MapPin, Camera, Loader2, Circle, Pencil } from 'lucide-react';
+import { Package, ClipboardList, DollarSign, Star, MapPin, Camera, Loader2, Circle, Pencil, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useMyBusiness } from '../../hooks/useMyBusiness';
 import { CreateBusinessForm } from './CreateBusinessForm';
 import { productService } from '../../services/productService';
@@ -25,6 +26,7 @@ import { PaymentSettings } from './PaymentSettings';
 
 export function DashboardHome() {
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const { business, loading, refresh } = useMyBusiness();
   const { showToast } = useToast();
   const [stats, setStats] = useState<{
@@ -213,16 +215,51 @@ export function DashboardHome() {
   if (loading) return <RowSkeleton count={3} />;
 
   if (!business) {
-    return <CreateBusinessForm onCreated={refresh} />;
+    // Al crearlo, volvemos arriba para que se vea "Sube tu primer producto"
+    // (antes la página quedaba a mitad del panel)
+    return (
+      <CreateBusinessForm
+        onCreated={() => {
+          window.scrollTo({ top: 0 });
+          refresh();
+        }}
+      />
+    );
   }
+
+  const noProductsYet = stats !== null && myProducts.length === 0;
 
   return (
     <div>
-      <img
-        src="/banner-emprende.jpg"
-        alt="Tu talento merece su propio espacio. Crea tu emprendimiento y conecta con tu comunidad universitaria."
-        className="mb-4 w-full rounded-card object-cover shadow-card"
-      />
+      {noProductsYet && (
+        <div className="mb-4 rounded-card-lg bg-primary p-5 text-white shadow-card">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15">
+            <Package size={22} />
+          </div>
+          <h2 className="mt-3 font-serif text-xl font-semibold leading-tight">Sube tu primer producto</h2>
+          <p className="mt-1 text-sm text-white/80">
+            Tu emprendimiento ya está creado. Agrega lo que vendes con foto y precio para que los
+            estudiantes puedan encontrarte y hacerte pedidos.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard/products/new')}
+            className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-white text-sm font-semibold text-primary transition-transform active:scale-[0.98]"
+          >
+            <Plus size={18} />
+            Crear mi primer producto
+          </button>
+        </div>
+      )}
+
+      {/* Mientras no hay productos, la tarjeta de arriba ocupa el lugar del banner */}
+      {!noProductsYet && (
+        <img
+          src="/banner-emprende.jpg"
+          alt="Tu talento merece su propio espacio. Crea tu emprendimiento y conecta con tu comunidad universitaria."
+          className="mb-4 w-full rounded-card object-cover shadow-card"
+        />
+      )}
 
       <div className="rounded-card border border-ink/8 bg-white p-4 shadow-card">
         <div className="flex items-center gap-3">

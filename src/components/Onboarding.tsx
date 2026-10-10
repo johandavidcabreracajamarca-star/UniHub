@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MessageCircle, Rocket, ShieldCheck, ShoppingBag, type LucideIcon } from 'lucide-react';
 import { BrandMark } from './BrandMark';
 import { markOnboardingSeen, onboardingSeen } from '../utils/onboarding';
@@ -27,7 +28,7 @@ const SLIDES: { Icon: LucideIcon; tone: string; title: string; text: string }[] 
     Icon: Rocket,
     tone: 'bg-primary-light text-primary',
     title: '¿Tienes un emprendimiento?',
-    text: 'Créalo gratis desde tu perfil, sube tus productos y empieza a recibir pedidos.',
+    text: 'Créalo gratis en un minuto, sube tus productos y empieza a recibir pedidos.',
   },
 ];
 
@@ -35,6 +36,7 @@ const SLIDES: { Icon: LucideIcon; tone: string; title: string; text: string }[] 
 export function Onboarding({ onDone }: { onDone?: () => void }) {
   const [open, setOpen] = useState(() => !onboardingSeen());
   const [step, setStep] = useState(0);
+  const navigate = useNavigate();
 
   if (!open) return null;
 
@@ -75,11 +77,20 @@ export function Onboarding({ onDone }: { onDone?: () => void }) {
         </div>
 
         <button
-          onClick={() => (last ? finish() : setStep(step + 1))}
+          onClick={() => {
+            if (!last) return setStep(step + 1);
+            finish();
+            navigate('/dashboard');
+          }}
           className="h-12 w-full rounded-control bg-primary text-base font-semibold text-white transition-transform active:scale-[0.98]"
         >
-          {last ? 'Empezar a explorar' : 'Siguiente'}
+          {last ? 'Crear mi emprendimiento' : 'Siguiente'}
         </button>
+        {last && (
+          <button onClick={finish} className="mt-2 h-11 w-full text-sm font-semibold text-ink/60">
+            Por ahora solo quiero explorar
+          </button>
+        )}
       </div>
     </div>
   );

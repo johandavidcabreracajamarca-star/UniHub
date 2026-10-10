@@ -8,7 +8,11 @@ import { SortSelect } from '../components/SortSelect';
 import { ProductCard } from '../components/ProductCard';
 import { BusinessCard } from '../components/BusinessCard';
 import { ProductGridSkeleton, EmptyState, ErrorState } from '../components/StateViews';
-import { PackageSearch } from 'lucide-react';
+import { PackageSearch, Rocket, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { useAuthGate } from '../hooks/useAuthGate';
+import { useMyBusiness } from '../hooks/useMyBusiness';
 import { InstallBanner } from '../components/InstallBanner';
 
 // Destacados: mejor calificados (con suficientes reseñas para confiar en el
@@ -26,6 +30,17 @@ export function Explore() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const navigate = useNavigate();
+  const { profile } = useAuth();
+  const { requireAuth } = useAuthGate();
+  const { business: myBusiness, loading: loadingMyBusiness } = useMyBusiness();
+
+  // Invitación a vender: para quien no tiene cuenta o aún no tiene emprendimiento
+  const showSellInvite = !profile || (!loadingMyBusiness && !myBusiness && profile.role !== 'admin');
+  const handleSell = () => {
+    if (!requireAuth('abrir tu emprendimiento') || !profile) return;
+    navigate('/dashboard');
+  };
 
   const load = async () => {
     setLoading(true);
@@ -76,6 +91,25 @@ export function Explore() {
             ))}
           </div>
         </section>
+      )}
+
+      {showSellInvite && (
+        <div className="mt-7 px-4 md:px-6">
+          <button
+            type="button"
+            onClick={handleSell}
+            className="flex w-full items-center gap-3 rounded-card-lg bg-accent-light p-4 text-left shadow-card transition-opacity hover:opacity-90"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-ink">
+              <Rocket size={18} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold text-ink">¿Vendes algo? Crea tu emprendimiento</span>
+              <span className="block text-xs text-ink/60">Es gratis y sin comisión. Te toma un minuto.</span>
+            </span>
+            <ChevronRight size={18} className="shrink-0 text-ink/40" />
+          </button>
+        </div>
       )}
 
       <section className="mt-7 px-4 pb-6 md:px-6">
