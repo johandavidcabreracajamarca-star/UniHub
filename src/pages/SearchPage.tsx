@@ -48,7 +48,7 @@ export function SearchPage() {
   const [recent, setRecent] = useState<string[]>(() => getRecentSearches());
   const [popular, setPopular] = useState<string[]>(FALLBACK_SEARCHES);
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
-  const [sort, setSort] = useState<ProductSort>('recientes');
+  const [sort, setSort] = useState<ProductSort>('populares');
   const [showFilters, setShowFilters] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [universities, setUniversities] = useState<University[]>([]);

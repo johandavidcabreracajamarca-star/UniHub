@@ -2,6 +2,7 @@ import { ArrowUpDown, ChevronDown } from 'lucide-react';
 import type { ProductSort } from '../services/productService';
 
 const SORT_LABELS: Record<ProductSort, string> = {
+  populares: 'Populares',
   recientes: 'Más recientes',
   precio_asc: 'Precio: menor a mayor',
   precio_desc: 'Precio: mayor a menor',

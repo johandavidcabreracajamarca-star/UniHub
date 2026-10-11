@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { Business, Product, ProductCategory } from '../types';
 import { productService, type ProductSort } from '../services/productService';
 import { businessService } from '../services/businessService';
+import { statsService } from '../services/statsService';
 import { HomeHeader } from '../components/HomeHeader';
 import { CategoryPills } from '../components/CategoryPills';
 import { SortSelect } from '../components/SortSelect';
@@ -15,17 +16,19 @@ import { useAuthGate } from '../hooks/useAuthGate';
 import { useMyBusiness } from '../hooks/useMyBusiness';
 import { InstallBanner } from '../components/InstallBanner';
 
-// Destacados: mejor calificados (con suficientes reseñas para confiar en el
-// promedio) y con un empujón a los recién llegados para que también se vean.
-function featuredScore(b: Business): number {
+// Destacados: los de más actividad en las últimas dos semanas (visitas,
+// favoritos y pedidos), los mejor calificados (con suficientes reseñas para
+// confiar en el promedio) y un empujón a los recién llegados para que también
+// se vean.
+function featuredScore(b: Business, activity: number): number {
   const confidence = Math.min(b.review_count ?? 0, 10) / 10;
   const isNew = Date.now() - new Date(b.created_at).getTime() < 14 * 24 * 60 * 60 * 1000;
-  return (b.rating ?? 0) * confidence + (isNew ? 2.5 : 0) + (b.available_now ? 0.5 : 0);
+  return activity + (b.rating ?? 0) * confidence + (isNew ? 2.5 : 0) + (b.available_now ? 0.5 : 0);
 }
 
 export function Explore() {
   const [category, setCategory] = useState<ProductCategory | 'todas'>('todas');
-  const [sort, setSort] = useState<ProductSort>('recientes');
+  const [sort, setSort] = useState<ProductSort>('populares');
   const [products, setProducts] = useState<Product[]>([]);
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,12 +49,14 @@ export function Explore() {
     setLoading(true);
     setError(false);
     try {
-      const [p, b] = await Promise.all([
+      const [p, b, popularity] = await Promise.all([
         productService.listAll({ category, sort }),
         businessService.listVerified(),
+        statsService.getPopularityScores(),
       ]);
       setProducts(p);
-      setBusinesses([...b].sort((x, y) => featuredScore(y) - featuredScore(x)).slice(0, 10));
+      const score = (x: Business) => featuredScore(x, popularity.byBusiness[x.id] ?? 0);
+      setBusinesses([...b].sort((x, y) => score(y) - score(x)).slice(0, 10));
     } catch {
       setError(true);
     } finally {
@@ -83,7 +88,7 @@ export function Explore() {
         <section className="mt-7 px-4 md:px-6">
           <div className="mb-3">
             <h2 className="text-lg font-bold tracking-tight text-ink">Destacados de la semana</h2>
-            <p className="text-xs text-ink/50">Los mejor calificados y los nuevos en la U</p>
+            <p className="text-xs text-ink/50">Los más populares, mejor calificados y nuevos en la U</p>
           </div>
           <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-none">
             {businesses.map((b) => (

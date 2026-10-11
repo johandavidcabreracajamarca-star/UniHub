@@ -650,6 +650,47 @@ end;
 $function$
 ;
 
+CREATE OR REPLACE FUNCTION public.product_popularity()
+ RETURNS TABLE(product_id uuid, business_id uuid, score numeric)
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  with
+  visitas as (
+    select pv.product_id,
+           sum(power(0.5, ((now() at time zone 'America/Bogota')::date - pv.view_date) / 7.0)) as pts
+    from product_views pv
+    where pv.view_date >= (now() at time zone 'America/Bogota')::date - 13
+    group by pv.product_id
+  ),
+  pedidos as (
+    select items.product_id,
+           8 * sum(power(0.5, extract(epoch from now() - o.created_at) / 86400 / 7.0)) as pts
+    from (select distinct order_id, product_id from order_items where product_id is not null) items
+    join orders o on o.id = items.order_id
+    where o.status in ('confirmado', 'en_preparacion', 'completado')
+      and o.created_at >= now() - interval '14 days'
+    group by items.product_id
+  ),
+  favoritos as (
+    select f.business_id,
+           3 * sum(power(0.5, extract(epoch from now() - f.created_at) / 86400 / 7.0)) as pts
+    from favorites f
+    where f.created_at >= now() - interval '14 days'
+    group by f.business_id
+  )
+  select p.id as product_id,
+         p.business_id,
+         round((coalesce(v.pts, 0) + coalesce(pe.pts, 0) + coalesce(fa.pts, 0))::numeric, 2) as score
+  from products p
+  left join visitas v on v.product_id = p.id
+  left join pedidos pe on pe.product_id = p.id
+  left join favoritos fa on fa.business_id = p.business_id
+  where coalesce(v.pts, 0) + coalesce(pe.pts, 0) + coalesce(fa.pts, 0) > 0;
+$function$
+;
+
 CREATE OR REPLACE FUNCTION public.protect_business_admin_fields()
  RETURNS trigger
  LANGUAGE plpgsql

@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import { demoDb } from '../data/demoDb';
+import { ACTIVITY_WEIGHTS, ACTIVITY_WINDOW_DAYS, decay } from '../utils/popularity';
 
 // ============================================================================
 // ESTADÍSTICAS DEL EMPRENDEDOR
@@ -46,7 +47,80 @@ function loadDemoViews(): (ViewRow & { business_id: string; viewer_id: string })
   }
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// El feed y "Destacados" piden los puntajes casi al mismo tiempo: se guardan
+// un minuto para no consultar dos veces.
+export interface PopularityScores {
+  /** Actividad de cada producto (solo los que tienen actividad) */
+  byProduct: Record<string, number>;
+  /** Suma de la actividad de los productos de cada emprendimiento */
+  byBusiness: Record<string, number>;
+}
+
+let popularityCache: { at: number; promise: Promise<PopularityScores> } | null = null;
+
+function emptyScores(): PopularityScores {
+  return { byProduct: {}, byBusiness: {} };
+}
+
+async function fetchPopularity(): Promise<PopularityScores> {
+  const result = emptyScores();
+  const add = (productId: string, businessId: string, pts: number) => {
+    result.byProduct[productId] = (result.byProduct[productId] ?? 0) + pts;
+    result.byBusiness[businessId] = (result.byBusiness[businessId] ?? 0) + pts;
+  };
+
+  if (isSupabaseConfigured && supabase) {
+    // Si la función aún no existe en Supabase, el feed queda por recientes
+    const { data, error } = await supabase.rpc('product_popularity');
+    if (error || !data) return result;
+    for (const row of data as { product_id: string; business_id: string; score: number | string }[]) {
+      add(row.product_id, row.business_id, Number(row.score));
+    }
+    return result;
+  }
+
+  // Modo demo: misma fórmula que la función SQL
+  const now = Date.now();
+  const daysSince = (iso: string) => (now - new Date(iso).getTime()) / DAY_MS;
+  const products = demoDb.getProducts();
+  const businessOf = new Map(products.map((p) => [p.id, p.business_id]));
+
+  const since = daysAgo(ACTIVITY_WINDOW_DAYS - 1);
+  const today = new Date(isoDate(new Date())).getTime();
+  for (const v of loadDemoViews()) {
+    if (v.view_date < since) continue;
+    const days = (today - new Date(v.view_date).getTime()) / DAY_MS;
+    add(v.product_id, v.business_id, ACTIVITY_WEIGHTS.view * decay(days));
+  }
+  for (const o of demoDb.getOrders()) {
+    if (!['confirmado', 'en_preparacion', 'completado'].includes(o.status)) continue;
+    const days = daysSince(o.created_at);
+    if (days > ACTIVITY_WINDOW_DAYS) continue;
+    for (const productId of new Set((o.items ?? []).map((i) => i.product_id))) {
+      add(productId, businessOf.get(productId) ?? o.business_id, ACTIVITY_WEIGHTS.order * decay(days));
+    }
+  }
+  for (const f of demoDb.getFavoritesRaw()) {
+    const days = daysSince(f.created_at);
+    if (days > ACTIVITY_WINDOW_DAYS) continue;
+    for (const p of products) {
+      if (p.business_id === f.business_id) add(p.id, p.business_id, ACTIVITY_WEIGHTS.favorite * decay(days));
+    }
+  }
+  return result;
+}
+
 export const statsService = {
+  /** Puntaje de actividad de los últimos 14 días, por producto y por emprendimiento. */
+  getPopularityScores(): Promise<PopularityScores> {
+    if (!popularityCache || Date.now() - popularityCache.at > 60_000) {
+      popularityCache = { at: Date.now(), promise: fetchPopularity().catch(emptyScores) };
+    }
+    return popularityCache.promise;
+  },
+
   async recordProductView(input: { productId: string; businessId: string; viewerId: string }): Promise<void> {
     if (isSupabaseConfigured && supabase) {
       // Insert normal, no upsert: el "on conflict" de un upsert le exige a

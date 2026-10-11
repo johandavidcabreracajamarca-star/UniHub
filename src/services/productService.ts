@@ -4,8 +4,10 @@ import { CATEGORY_LABELS } from '../types';
 import { demoDb } from '../data/demoDb';
 import { businessService } from './businessService';
 import { distanceToBusiness, type Coordinates } from '../utils/geo';
+import { statsService } from './statsService';
+import { sortByPopularity } from '../utils/popularity';
 
-export type ProductSort = 'recientes' | 'precio_asc' | 'precio_desc' | 'calificacion' | 'cercanos';
+export type ProductSort = 'populares' | 'recientes' | 'precio_asc' | 'precio_desc' | 'calificacion' | 'cercanos';
 
 // Campos que se pueden editar en un producto ya existente.
 export interface ProductUpdateInput {
@@ -75,6 +77,8 @@ async function enrichWithBusiness(product: Product): Promise<Product> {
 export const productService = {
   async listAll(filters: ProductFilters = {}): Promise<Product[]> {
     let products: Product[];
+    // Los puntajes se piden a la vez que los productos, no después
+    const popularity = filters.sort === 'populares' ? statsService.getPopularityScores() : null;
 
     if (isSupabaseConfigured && supabase) {
       let queryBuilder = supabase
@@ -122,6 +126,7 @@ export const productService = {
       return true;
     });
 
+    if (popularity) return sortByPopularity(filtered, (await popularity).byProduct);
     return sortProducts(filtered, filters.sort, filters.userLocation);
   },
 
